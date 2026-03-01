@@ -1,7 +1,9 @@
 import type { AISummary, NewsItem } from "../types";
 
 export class AIService {
-  private static readonly API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+  private static get apiKey() {
+    return import.meta.env.VITE_GROQ_API_KEY;
+  }
   private static readonly API_URL =
     "https://api.groq.com/openai/v1/chat/completions";
   private static readonly MODEL = "llama-3.3-70b-versatile";
@@ -11,6 +13,10 @@ export class AIService {
     date: string,
     news: NewsItem[]
   ): Promise<AISummary> {
+    console.log(
+      `[AIService] Summarizing news for ${symbol} on ${date}. Key present: ${!!this.apiKey}`
+    );
+
     if (news.length === 0) {
       return {
         headline: "검색된 기사가 없습니다.",
@@ -21,12 +27,14 @@ export class AIService {
       };
     }
 
-    if (!this.API_KEY) {
-      console.warn("VITE_GROQ_API_KEY가 없습니다.");
+    if (!this.apiKey) {
+      console.warn(
+        "[AIService] VITE_GROQ_API_KEY가 없습니다. .env.local 혹은 Vercel 환경변수를 확인해주세요."
+      );
       return {
         headline: "AI 요약 기능 비활성화",
         content:
-          "VITE_GROQ_API_KEY 설정이 필요합니다. 현재는 실제 뉴스 목록만 표시됩니다 (기사가 있는 경우).",
+          "VITE_GROQ_API_KEY 설정이 필요합니다. 환경변수 추가 후 로컬은 npm run dev를 재시작, Vercel은 다시 배포(Redeploy)해야 반영됩니다.",
         sentiment: "neutral",
         date: date,
         sourceLinks: news.map((n) => ({ title: n.title, url: n.url })),
@@ -55,7 +63,7 @@ ${newsContext}`;
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.API_KEY}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           model: this.MODEL,
@@ -89,7 +97,10 @@ ${newsContext}`;
         sourceLinks: news.map((n) => ({ title: n.title, url: n.url })),
       };
     } catch (err) {
-      console.error("AI 요약 오류:", err);
+      console.error(
+        `[AIService] AI 요약 오류 (API_KEY present: ${!!this.apiKey}):`,
+        err
+      );
       // Even if AI fails, at least show the news links if they exist
       return {
         headline: `${symbol} 뉴스 요약 실패`,
