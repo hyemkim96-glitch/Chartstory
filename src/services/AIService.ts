@@ -20,7 +20,7 @@ export class AIService {
     if (news.length === 0) {
       return {
         headline: "검색된 기사가 없습니다.",
-        content: `${date} 기준 ${symbol}에 대해 검색된 주요 뉴스가 없습니다. NewsAPI(무료 버전) 정책상 30일 이전의 과거 뉴스는 조회가 제한될 수 있습니다.`,
+        content: `${date} 기준 ${symbol}에 대해 검색된 주요 뉴스가 없습니다. 해당 시점에 특별한 시장 공시나 보도가 없었을 수 있습니다.`,
         sentiment: "neutral",
         date: date,
         sourceLinks: [],

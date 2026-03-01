@@ -20,19 +20,7 @@ export class NewsService {
     );
 
     try {
-      // Check if date is within last 30 days (NewsAPI free tier limit)
-      const newsDate = new Date(date);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      if (newsDate < thirtyDaysAgo) {
-        console.warn(
-          `[NewsService] Date ${date} is older than 30 days. NewsAPI (Free) does not support historical news beyond 30 days.`
-        );
-        // Return empty array instead of falling back to mock
-        return [];
-      }
-
+      // No guard here anymore — backend handles historical news via Google RSS fallback
       const params = new URLSearchParams({
         symbol: symbol,
         name: name,
