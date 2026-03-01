@@ -14,6 +14,58 @@ interface Article {
   category?: "company" | "macro";
 }
 
+// ── 기간 범위 계산 ─────────────────────────────────────────────────────────
+// period: "D" | "W" | "M" | "Y"
+// date: 클릭한 캔들의 기준 날짜 (일봉=당일, 주봉=해당주 월요일, 월봉=1일, 년봉=1월1일)
+function getDateRange(
+  date: string,
+  period: string
+): { fromDate: string; toDate: string } {
+  const d = new Date(date);
+
+  if (period === "Y") {
+    // 해당 연도 전체
+    const year = d.getUTCFullYear();
+    return {
+      fromDate: `${year}-01-01`,
+      toDate: `${year}-12-31`,
+    };
+  }
+
+  if (period === "M") {
+    // 해당 월 전체
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth(); // 0-indexed
+    const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    const mm = String(month + 1).padStart(2, "0");
+    return {
+      fromDate: `${year}-${mm}-01`,
+      toDate: `${year}-${mm}-${String(lastDay).padStart(2, "0")}`,
+    };
+  }
+
+  if (period === "W") {
+    // 해당 주 전체 (월요일 ~ 일요일)
+    const dow = d.getUTCDay(); // 0=Sun
+    const monday = new Date(d);
+    monday.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1));
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    return {
+      fromDate: monday.toISOString().split("T")[0],
+      toDate: sunday.toISOString().split("T")[0],
+    };
+  }
+
+  // "D" — 전날 ~ 당일
+  const prev = new Date(d);
+  prev.setUTCDate(d.getUTCDate() - 1);
+  return {
+    fromDate: prev.toISOString().split("T")[0],
+    toDate: date,
+  };
+}
+
 // ── NewsAPI helper ─────────────────────────────────────────────────────────
 async function fetchNewsApi(
   query: string,
@@ -86,54 +138,59 @@ export default async function handler(req: any, res: any) {
     const date = url.searchParams.get("date") ?? "";
     const name = url.searchParams.get("name") ?? "";
     const region = url.searchParams.get("region") ?? "US";
+    const period = url.searchParams.get("period") ?? "D"; // D | W | M | Y
 
     if (!symbol || !date) {
       return res.status(400).json({ error: "symbol, date 파라미터가 필요합니다." });
     }
 
-    // ── 검색 쿼리 구성 ──────────────────────────────────────────────────────
-    const stockQuery = name ? `${symbol} OR "${name}"` : symbol;
-
-    // 거시경제 / 정치 / 글로벌 이슈 쿼리 (지역별)
-    const macroQuery =
-      region === "KR"
-        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 국내증시 OR 미중무역"
-        : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff"';
+    const { fromDate, toDate } = getDateRange(date, period);
+    console.log(
+      `[api/news] ${symbol} | period=${period} | ${fromDate} ~ ${toDate}`
+    );
 
     const language = region === "KR" ? "ko" : "en";
     const hl = region === "KR" ? "ko" : "en-US";
     const gl = region === "KR" ? "KR" : "US";
     const ceid = region === "KR" ? "KR:ko" : "US:en";
 
-    // 날짜 범위: 전날 ~ 해당 날
-    const d = new Date(date);
-    const prev = new Date(d);
-    prev.setDate(prev.getDate() - 1);
-    const fromDate = prev.toISOString().split("T")[0];
+    // 검색 쿼리 구성
+    // 년봉은 연도를 쿼리에 포함해 관련성 높이기
+    const yearSuffix = period === "Y" ? ` ${new Date(date).getUTCFullYear()}년` : "";
+    const stockQuery = name
+      ? `${symbol} OR "${name}"${yearSuffix}`
+      : symbol + yearSuffix;
 
-    const diffDays = (Date.now() - d.getTime()) / (1000 * 3600 * 24);
+    const macroQuery =
+      region === "KR"
+        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 국내증시 OR 미중무역"
+        : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff"';
+
+    // NewsAPI 무료 플랜은 30일 이내만 지원
+    const diffDays =
+      (Date.now() - new Date(fromDate).getTime()) / (1000 * 3600 * 24);
 
     let articles: Article[] = [];
 
     if (diffDays > 28) {
-      // ── Google News RSS fallback (오래된 날짜) ───────────────────────────
-      console.log(`[api/news] Old date (${Math.floor(diffDays)}d ago) → RSS`);
+      // ── Google News RSS fallback ────────────────────────────────────────
+      const companyLimit = period === "Y" ? 8 : 6;
+      const macroLimit = period === "Y" ? 5 : 4;
 
       const [stockItems, macroItems] = await Promise.all([
-        fetchRSS(stockQuery, fromDate, date, hl, gl, ceid, "company", 6),
-        fetchRSS(macroQuery, fromDate, date, hl, gl, ceid, "macro", 4),
+        fetchRSS(stockQuery, fromDate, toDate, hl, gl, ceid, "company", companyLimit),
+        fetchRSS(macroQuery, fromDate, toDate, hl, gl, ceid, "macro", macroLimit),
       ]);
-
       articles = [...stockItems, ...macroItems];
     } else {
-      // ── NewsAPI (최근 날짜) ───────────────────────────────────────────────
-      console.log(`[api/news] Recent date → NewsAPI`);
+      // ── NewsAPI ────────────────────────────────────────────────────────
+      const companyLimit = period === "Y" ? 8 : 6;
+      const macroLimit = period === "Y" ? 5 : 4;
 
       const [stockItems, macroItems] = await Promise.all([
-        fetchNewsApi(stockQuery, fromDate, date, language, 6, "company"),
-        fetchNewsApi(macroQuery, fromDate, date, language, 4, "macro"),
+        fetchNewsApi(stockQuery, fromDate, toDate, language, companyLimit, "company"),
+        fetchNewsApi(macroQuery, fromDate, toDate, language, macroLimit, "macro"),
       ]);
-
       articles = [...stockItems, ...macroItems];
     }
 

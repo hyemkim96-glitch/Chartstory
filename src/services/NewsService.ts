@@ -1,4 +1,4 @@
-import type { NewsItem, StockMetadata } from "../types";
+import type { NewsItem, StockMetadata, TimeRange } from "../types";
 
 interface NewsApiArticle {
   title: string;
@@ -7,25 +7,35 @@ interface NewsApiArticle {
   url: string;
   source: { name: string };
   publishedAt: string;
+  category?: "company" | "macro";
 }
+
+// TimeRange → API period 코드
+const PERIOD_MAP: Record<TimeRange, string> = {
+  일: "D",
+  주: "W",
+  월: "M",
+  년: "Y",
+};
 
 export class NewsService {
   static async getNewsForDate(
     date: string,
-    stock: StockMetadata
+    stock: StockMetadata,
+    timeRange: TimeRange = "일"
   ): Promise<NewsItem[]> {
     const { symbol, name, region } = stock;
-    console.log(
-      `[NewsService] Fetching news for ${symbol} (${name}) on ${date}`
-    );
+    const period = PERIOD_MAP[timeRange];
+
+    console.log(`[NewsService] ${symbol} | ${timeRange}(${period}) | ${date}`);
 
     try {
-      // No guard here anymore — backend handles historical news via Google RSS fallback
       const params = new URLSearchParams({
-        symbol: symbol,
-        name: name,
-        date: date,
+        symbol,
+        name,
+        date,
         region: region || "US",
+        period,
       });
 
       const response = await fetch(`/api/news?${params.toString()}`);
@@ -38,26 +48,22 @@ export class NewsService {
       }
 
       const data = await response.json();
-      console.log(
-        `[NewsService] Received ${data.articles?.length || 0} articles from API`
-      );
+      console.log(`[NewsService] ${data.articles?.length || 0}건 수신`);
 
       if (data.articles && data.articles.length > 0) {
-        return data.articles.slice(0, 5).map((a: NewsApiArticle) => ({
+        return data.articles.map((a: NewsApiArticle) => ({
           title: a.title,
           description: a.description || a.content || "",
           url: a.url,
           source: a.source.name,
           publishedAt: a.publishedAt,
+          category: a.category,
         }));
-      } else {
-        console.log(
-          `[NewsService] No articles found for ${symbol} on ${date}.`
-        );
-        return [];
       }
+
+      return [];
     } catch (err) {
-      console.error("[NewsService] Real news fetch failed:", err);
+      console.error("[NewsService] 뉴스 조회 실패:", err);
       return [];
     }
   }

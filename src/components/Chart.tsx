@@ -184,12 +184,17 @@ export default function Chart() {
         setLoading(true);
         setError(null);
         try {
-          const news = await NewsService.getNewsForDate(dateStr, currentStock);
+          const news = await NewsService.getNewsForDate(
+            dateStr,
+            currentStock,
+            timeRange
+          );
           const summary = await AIService.summarizeNews(
             currentStock.symbol,
             dateStr,
             news,
-            candleInfo
+            candleInfo,
+            timeRange
           );
           setSummary(summary);
         } catch (err) {

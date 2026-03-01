@@ -1,4 +1,4 @@
-import type { AISummary, NewsItem } from "../types";
+import type { AISummary, NewsItem, TimeRange } from "../types";
 
 export interface CandleInfo {
   open: number;
@@ -20,16 +20,34 @@ export class AIService {
     symbol: string,
     date: string,
     news: NewsItem[],
-    candle?: CandleInfo
+    candle?: CandleInfo,
+    timeRange: TimeRange = "일"
   ): Promise<AISummary> {
     console.log(
-      `[AIService] Summarizing news for ${symbol} on ${date}. Key present: ${!!this.apiKey}`
+      `[AIService] Summarizing ${symbol} | ${timeRange} | ${date}. Key: ${!!this.apiKey}`
     );
+
+    // 기간 레이블 (프롬프트용)
+    const periodLabel: Record<TimeRange, string> = {
+      일: "당일",
+      주: "해당 주",
+      월: "해당 월",
+      년: "해당 연도",
+    };
+    const periodStr = periodLabel[timeRange];
+
+    // 년봉은 "2020년", 월봉은 "2020년 3월", 주봉/일봉은 날짜 그대로
+    const dateLabel =
+      timeRange === "년"
+        ? `${new Date(date).getUTCFullYear()}년`
+        : timeRange === "월"
+          ? `${new Date(date).getUTCFullYear()}년 ${new Date(date).getUTCMonth() + 1}월`
+          : date;
 
     if (news.length === 0) {
       return {
         headline: "검색된 기사가 없습니다.",
-        content: `${date} 기준 ${symbol}에 대해 검색된 주요 뉴스가 없습니다. 해당 시점에 특별한 시장 공시나 보도가 없었을 수 있습니다.`,
+        content: `${dateLabel} ${symbol}에 대해 검색된 주요 뉴스가 없습니다. 해당 시점에 특별한 시장 이슈가 없었을 수 있습니다.`,
         sentiment: "neutral",
         date: date,
         sourceLinks: [],
@@ -79,7 +97,7 @@ export class AIService {
           : "[거시경제 / 시장 / 정치 / 글로벌 뉴스]\n없음";
 
       const prompt = `당신은 한국어로 응답하는 전문 금융 애널리스트입니다.
-${date} 기준 ${symbol} 주가 변동의 원인을 아래 뉴스를 바탕으로 분석해 주세요.
+${dateLabel} ${symbol} 주가의 ${periodStr} 흐름과 변동 원인을 아래 뉴스를 바탕으로 분석해 주세요.
 ${priceContext}
 주가는 단순히 해당 종목 뉴스만이 아니라 금리 결정, 정치 이벤트, 지정학적 리스크, 환율, 섹터 이슈, 글로벌 시장 동향 등 다양한 요인에 의해 움직입니다. 아래 두 카테고리의 뉴스를 모두 고려하여 가장 설득력 있는 원인을 분석하세요.
 
@@ -89,7 +107,7 @@ ${macroSection}
 
 반드시 아래 JSON 형식으로만 응답하세요 (마크다운 코드블록 없이):
 {
-  "headline": "한 문장의 핵심 헤드라인 — 주가 변동의 주된 원인 중심 (한국어)",
+  "headline": "한 문장의 핵심 헤드라인 — ${periodStr} 주가 흐름의 핵심 원인 (한국어)",
   "summary": "3~4문장 분석. 종목 자체 요인과 거시/외부 요인을 구분하여 설명. 어떤 요인이 더 지배적이었는지 판단 포함 (한국어)",
   "sentiment": "positive 또는 negative 또는 neutral"
 }`;
