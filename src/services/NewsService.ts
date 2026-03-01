@@ -71,16 +71,37 @@ export class NewsService {
     symbol: string,
     date: string
   ): Promise<NewsItem[]> {
-    console.log(`Fetching news for ${symbol} on ${date}`);
+    console.log(`[NewsService] Fetching news for ${symbol} on ${date}`);
 
     try {
-      // /api/news works in both dev (via vite plugin) and Vercel (serverless fn)
+      // Check if date is within last 30 days (NewsAPI free tier limit)
+      const newsDate = new Date(date);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      if (newsDate < thirtyDaysAgo) {
+        console.warn(
+          `[NewsService] Date ${date} is older than 30 days. Real news might not be available.`
+        );
+      }
+
       const response = await fetch(
         `/api/news?symbol=${encodeURIComponent(symbol)}&date=${date}`
       );
-      const data = await response.json();
 
-      if (response.ok && data.articles && data.articles.length > 0) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      console.log(
+        `[NewsService] Received ${data.articles?.length || 0} articles from API`
+      );
+
+      if (data.articles && data.articles.length > 0) {
         return data.articles.slice(0, 5).map((a: NewsApiArticle) => ({
           title: a.title,
           description: a.description || a.content || "",
@@ -88,9 +109,16 @@ export class NewsService {
           source: a.source.name,
           publishedAt: a.publishedAt,
         }));
+      } else {
+        console.log(
+          `[NewsService] No articles found for ${symbol} on ${date}. Using mock data.`
+        );
       }
     } catch (err) {
-      console.warn("NewsAPI 호출 실패, 목업 데이터 사용:", err);
+      console.warn(
+        "[NewsService] Real news fetch failed, falling back to mock:",
+        err
+      );
     }
 
     // Date-seeded mock news — different for every (symbol, date) combination

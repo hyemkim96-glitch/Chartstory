@@ -10,14 +10,27 @@ import { cn } from "@/lib/utils";
 // ── Formatting helpers ───────────────────────────────────────────────────────
 function fmtPrice(price: number, currency: string): string {
   if (currency === "KRW") return price.toLocaleString("ko-KR") + "원";
-  return "$" + price.toFixed(2);
+  return (
+    "$" +
+    price.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 }
 
 function fmtChange(change: number, currency: string): string {
   const abs = Math.abs(change);
   const sign = change >= 0 ? "+" : "-";
   if (currency === "KRW") return sign + abs.toLocaleString("ko-KR") + "원";
-  return sign + "$" + abs.toFixed(2);
+  return (
+    sign +
+    "$" +
+    abs.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
 }
 
 function fmtChangeRate(rate: number): string {
@@ -27,15 +40,17 @@ function fmtChangeRate(rate: number): string {
 function fmtMarketCap(cap: number | undefined, currency: string): string {
   if (!cap || cap <= 0) return "—";
   if (currency === "KRW") {
-    if (cap >= 10000) return (cap / 10000).toFixed(0) + "조";
+    if (cap >= 10000) return (cap / 10000).toFixed(1) + "조";
     return cap.toLocaleString("ko-KR") + "억";
   }
-  return "—";
+  // US Market Cap usually in Billions/Trillions
+  if (cap >= 1000) return (cap / 1000).toFixed(2) + "T";
+  return cap.toFixed(2) + "B";
 }
 
 function fmtPer(per: number | undefined): string {
   if (!per || per <= 0) return "—";
-  return per.toFixed(2) + "배";
+  return per.toFixed(2);
 }
 
 // ── App ──────────────────────────────────────────────────────────────────────
