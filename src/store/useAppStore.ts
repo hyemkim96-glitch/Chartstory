@@ -1,0 +1,50 @@
+import { create } from "zustand";
+import type {
+  StockMetadata,
+  OHLCVData,
+  AISummary,
+  ChartSelection,
+  TimeRange,
+} from "../types";
+
+interface AppState {
+  currentStock: StockMetadata | null;
+  timeRange: TimeRange;
+  chartData: OHLCVData[];
+  selection: ChartSelection | null;
+  summary: AISummary | null;
+  isLoading: boolean;
+  error: string | null;
+
+  setStock: (stock: StockMetadata) => void;
+  setTimeRange: (range: TimeRange) => void;
+  setChartData: (data: OHLCVData[]) => void;
+  setSelection: (selection: ChartSelection | null) => void;
+  setSummary: (summary: AISummary | null) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  currentStock: {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    exchange: "NASDAQ",
+    region: "US",
+    currency: "USD",
+  },
+  timeRange: "1M",
+  chartData: [],
+  selection: null,
+  summary: null,
+  isLoading: false,
+  error: null,
+
+  setStock: (stock) => set({ currentStock: stock }),
+  setTimeRange: (timeRange) => set({ timeRange }),
+  setChartData: (data) => set({ chartData: data }),
+  setSelection: (selection) => set({ selection }),
+  setSummary: (summary) => set({ summary }),
+  setLoading: (loading) => set({ isLoading: loading }),
+  setError: (error) => set({ error }),
+}));

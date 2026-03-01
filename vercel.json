@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/news-api/:path*",
+      "destination": "https://newsapi.org/v2/:path*"
+    }
+  ]
+}
