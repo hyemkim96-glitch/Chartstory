@@ -161,10 +161,16 @@ export default async function handler(req: any, res: any) {
       ? `${symbol} OR "${name}"${yearSuffix}`
       : symbol + yearSuffix;
 
+    // KR은 시장/경제 + 국내정치를 분리해서 더 풍부하게 수집
     const macroQuery =
       region === "KR"
-        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 국내증시 OR 미중무역"
+        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 외국인매도 OR 미중무역"
         : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff"';
+
+    const politicsQuery =
+      region === "KR"
+        ? "대통령 OR 탄핵 OR 계엄 OR 국회 OR 정치 OR 여야 OR 정권"
+        : null; // 미국은 별도 정치 쿼리 불필요 (macro에 포함)
 
     // NewsAPI 무료 플랜은 30일 이내만 지원
     const diffDays =
@@ -172,26 +178,32 @@ export default async function handler(req: any, res: any) {
 
     let articles: Article[] = [];
 
+    const companyLimit = period === "Y" ? 7 : 5;
+    const macroLimit = period === "Y" ? 4 : 3;
+    const politicsLimit = 3;
+
     if (diffDays > 28) {
       // ── Google News RSS fallback ────────────────────────────────────────
-      const companyLimit = period === "Y" ? 8 : 6;
-      const macroLimit = period === "Y" ? 5 : 4;
-
-      const [stockItems, macroItems] = await Promise.all([
+      const requests: Promise<Article[]>[] = [
         fetchRSS(stockQuery, fromDate, toDate, hl, gl, ceid, "company", companyLimit),
         fetchRSS(macroQuery, fromDate, toDate, hl, gl, ceid, "macro", macroLimit),
-      ]);
-      articles = [...stockItems, ...macroItems];
+      ];
+      if (politicsQuery) {
+        requests.push(fetchRSS(politicsQuery, fromDate, toDate, hl, gl, ceid, "macro", politicsLimit));
+      }
+      const results = await Promise.all(requests);
+      articles = results.flat();
     } else {
       // ── NewsAPI ────────────────────────────────────────────────────────
-      const companyLimit = period === "Y" ? 8 : 6;
-      const macroLimit = period === "Y" ? 5 : 4;
-
-      const [stockItems, macroItems] = await Promise.all([
+      const requests: Promise<Article[]>[] = [
         fetchNewsApi(stockQuery, fromDate, toDate, language, companyLimit, "company"),
         fetchNewsApi(macroQuery, fromDate, toDate, language, macroLimit, "macro"),
-      ]);
-      articles = [...stockItems, ...macroItems];
+      ];
+      if (politicsQuery) {
+        requests.push(fetchNewsApi(politicsQuery, fromDate, toDate, language, politicsLimit, "macro"));
+      }
+      const results = await Promise.all(requests);
+      articles = results.flat();
     }
 
     console.log(
