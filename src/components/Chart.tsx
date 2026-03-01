@@ -10,6 +10,7 @@ import type {
   Time,
   IChartApi,
   ISeriesApi,
+  ISeriesMarkersPluginApi,
   MouseEventParams,
   BusinessDay,
 } from "lightweight-charts";
@@ -22,9 +23,7 @@ export default function Chart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const markersPluginRef = useRef<ReturnType<
-    typeof createSeriesMarkers
-  > | null>(null);
+  const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const {
     currentStock,
     timeRange,
