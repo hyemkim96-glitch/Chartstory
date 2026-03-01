@@ -109,12 +109,26 @@ export default function Chart() {
         if (!isCancelled && seriesRef.current) {
           chartDataRef.current = stockData; // 클릭 시 캔들 조회용 저장
           seriesRef.current.setData(stockData as CandlestickData<Time>[]);
-          chartRef.current?.timeScale().fitContent(); // 전체 데이터 범위로 자동 맞춤
+
+          // 일봉: 최근 2년만 기본 표시 (좌우 스크롤로 과거 탐색)
+          // 그 외: 전체 데이터 맞춤
+          if (timeRange === "일" && stockData.length > 0) {
+            const lastDate = String(stockData[stockData.length - 1].time);
+            const twoYearsAgo = new Date(lastDate);
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            chartRef.current?.timeScale().setVisibleRange({
+              from: twoYearsAgo.toISOString().split("T")[0] as Time,
+              to: lastDate as Time,
+            });
+          } else {
+            chartRef.current?.timeScale().fitContent();
+          }
 
           // 세계 사건 + 변동성 마커
           const events = await StockService.getEvents(
             currentStock.symbol,
-            stockData
+            stockData,
+            timeRange
           );
           if (!isCancelled && seriesRef.current) {
             eventsRef.current = events; // 클릭 시 위키 링크 조회용

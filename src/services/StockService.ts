@@ -324,7 +324,8 @@ export class StockService {
 
   static async getEvents(
     _symbol: string,
-    data: OHLCVData[]
+    data: OHLCVData[],
+    timeRange: TimeRange = "일"
   ): Promise<MarketEvent[]> {
     if (data.length === 0) return [];
 
@@ -337,33 +338,42 @@ export class StockService {
 
     // ── 세계 주요 사건 마커 ───────────────────────────────────────────────
     for (const ev of StockService.WORLD_EVENTS) {
-      if (ev.date < firstDate || ev.date > lastDate) continue;
+      let matchDate = "";
 
-      // 해당 날짜가 거래일이면 그대로, 아니면 가장 가까운 거래일 찾기
-      let matchDate = ev.date;
-      if (!dateTimes.has(ev.date)) {
-        // 앞뒤 5일 내 가장 가까운 거래일 탐색
-        let found = "";
-        for (let delta = 1; delta <= 5; delta++) {
-          const after = new Date(ev.date);
-          after.setDate(after.getDate() + delta);
-          const afterStr = after.toISOString().split("T")[0];
-          if (dateTimes.has(afterStr)) {
-            found = afterStr;
-            break;
-          }
-
-          const before = new Date(ev.date);
-          before.setDate(before.getDate() - delta);
-          const beforeStr = before.toISOString().split("T")[0];
-          if (dateTimes.has(beforeStr)) {
-            found = beforeStr;
-            break;
+      if (timeRange === "년") {
+        // 년봉: 사건 연도와 같은 연도의 캔들에 표시
+        const yearKey = ev.date.slice(0, 4) + "-01-01";
+        if (dateTimes.has(yearKey)) matchDate = yearKey;
+      } else if (timeRange === "월") {
+        // 월봉: 사건 월과 같은 월의 캔들에 표시
+        const monthKey = ev.date.slice(0, 7) + "-01";
+        if (dateTimes.has(monthKey)) matchDate = monthKey;
+      } else {
+        // 일봉/주봉: 범위 체크 후 ±7일 내 가장 가까운 거래일
+        if (ev.date < firstDate || ev.date > lastDate) continue;
+        if (dateTimes.has(ev.date)) {
+          matchDate = ev.date;
+        } else {
+          for (let delta = 1; delta <= 7; delta++) {
+            const after = new Date(ev.date);
+            after.setDate(after.getDate() + delta);
+            const afterStr = after.toISOString().split("T")[0];
+            if (dateTimes.has(afterStr)) {
+              matchDate = afterStr;
+              break;
+            }
+            const before = new Date(ev.date);
+            before.setDate(before.getDate() - delta);
+            const beforeStr = before.toISOString().split("T")[0];
+            if (dateTimes.has(beforeStr)) {
+              matchDate = beforeStr;
+              break;
+            }
           }
         }
-        if (!found) continue;
-        matchDate = found;
       }
+
+      if (!matchDate) continue;
 
       events.push({
         time: matchDate as import("lightweight-charts").Time,
