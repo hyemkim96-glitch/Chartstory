@@ -1,5 +1,11 @@
 import { cn } from "@/lib/utils";
-import { ExternalLink, Loader2, AlertCircle, Search } from "lucide-react";
+import {
+  ExternalLink,
+  Loader2,
+  AlertCircle,
+  Search,
+  Globe,
+} from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 
 interface SidebarProps {
@@ -28,7 +34,7 @@ const sentimentConfig: Record<
 };
 
 export default function Sidebar({ className }: SidebarProps) {
-  const { summary, isLoading, error, selection } = useAppStore();
+  const { summary, worldEvent, isLoading, error, selection } = useAppStore();
 
   const sentiment =
     sentimentConfig[summary?.sentiment ?? "neutral"] ??
@@ -91,6 +97,27 @@ export default function Sidebar({ className }: SidebarProps) {
                 : "차트에서 날짜를 클릭하면\nAI 분석을 생성합니다."}
             </p>
           </div>
+        )}
+
+        {/* World Event Banner */}
+        {!isLoading && worldEvent && (
+          <a
+            href={worldEvent.wikiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mx-4 mt-4 flex items-start gap-3 p-3 border border-[#f97316]/40 bg-[#f97316]/5 hover:border-[#f97316] hover:bg-[#f97316]/10 transition-all group"
+          >
+            <Globe className="w-4 h-4 text-[#f97316] shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-[#f97316] uppercase tracking-widest mb-0.5">
+                세계 주요 사건
+              </p>
+              <p className="text-xs text-primary leading-snug truncate">
+                {worldEvent.text}
+              </p>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-[#f97316]/60 group-hover:text-[#f97316] transition-colors mt-0.5" />
+          </a>
         )}
 
         {/* Summary */}

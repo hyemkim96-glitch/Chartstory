@@ -156,7 +156,10 @@ export default async function handler(req: any, res: any) {
 
     // 검색 쿼리 구성
     // 년봉은 연도를 쿼리에 포함해 관련성 높이기
-    const yearSuffix = period === "Y" ? ` ${new Date(date).getUTCFullYear()}년` : "";
+    const year = new Date(date).getUTCFullYear();
+    const yearSuffix = period === "Y"
+      ? (region === "KR" ? ` ${year}년` : ` ${year}`)
+      : "";
     const stockQuery = name
       ? `${symbol} OR "${name}"${yearSuffix}`
       : symbol + yearSuffix;

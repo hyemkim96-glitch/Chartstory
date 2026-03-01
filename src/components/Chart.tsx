@@ -33,6 +33,7 @@ export default function Chart() {
     setSelection,
     setLoading,
     setSummary,
+    setWorldEvent,
     setError,
   } = useAppStore();
 
@@ -176,13 +177,19 @@ export default function Chart() {
           dateStr = `${bd.year}-${String(bd.month).padStart(2, "0")}-${String(bd.day).padStart(2, "0")}`;
         }
 
-        // 세계 사건 마커 클릭 → 위키로 이동 후 AI 분석도 진행
+        // 세계 사건 마커: 사이드바에 링크 표시 (차트 클릭으로는 위키 자동이동 X)
         const worldEvent = eventsRef.current.find(
           (ev) => ev.eventType === "world" && String(ev.time) === dateStr
         );
-        if (worldEvent?.wikiUrl) {
-          window.open(worldEvent.wikiUrl, "_blank", "noopener,noreferrer");
-        }
+        setWorldEvent(
+          worldEvent?.wikiUrl
+            ? {
+                label: worldEvent.label,
+                text: worldEvent.text,
+                wikiUrl: worldEvent.wikiUrl,
+              }
+            : null
+        );
 
         setSelection({
           from: param.time,
@@ -237,7 +244,14 @@ export default function Chart() {
     return () => {
       chartRef.current?.unsubscribeClick(handleChartClick);
     };
-  }, [currentStock, setSelection, setLoading, setSummary, setError]);
+  }, [
+    currentStock,
+    setSelection,
+    setLoading,
+    setSummary,
+    setWorldEvent,
+    setError,
+  ]);
 
   return (
     <div className="w-full h-full">

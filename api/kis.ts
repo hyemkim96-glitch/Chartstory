@@ -288,18 +288,30 @@ export default async function handler(req: any, res: any) {
       const chunks: [string, string][] =
         period === "D"
           ? [
-            // 5년치 일봉 (병렬 요청)
-            [daysAgo(1825), daysAgo(1676)],
-            [daysAgo(1675), daysAgo(1526)],
-            [daysAgo(1525), daysAgo(1376)],
-            [daysAgo(1375), daysAgo(1226)],
-            [daysAgo(1225), daysAgo(1076)],
-            [daysAgo(1075), daysAgo(926)],
-            [daysAgo(925), daysAgo(776)],
-            [daysAgo(775), daysAgo(626)],
-            [daysAgo(625), daysAgo(476)],
-            [daysAgo(475), daysAgo(326)],
-            [daysAgo(325), daysAgo(176)],
+            // 10년치 일봉 (병렬 요청, 24 chunks × ~150일)
+            [daysAgo(3650), daysAgo(3501)],
+            [daysAgo(3500), daysAgo(3351)],
+            [daysAgo(3350), daysAgo(3201)],
+            [daysAgo(3200), daysAgo(3051)],
+            [daysAgo(3050), daysAgo(2901)],
+            [daysAgo(2900), daysAgo(2751)],
+            [daysAgo(2750), daysAgo(2601)],
+            [daysAgo(2600), daysAgo(2451)],
+            [daysAgo(2450), daysAgo(2301)],
+            [daysAgo(2300), daysAgo(2151)],
+            [daysAgo(2150), daysAgo(2001)],
+            [daysAgo(2000), daysAgo(1851)],
+            [daysAgo(1850), daysAgo(1701)],
+            [daysAgo(1700), daysAgo(1551)],
+            [daysAgo(1550), daysAgo(1401)],
+            [daysAgo(1400), daysAgo(1251)],
+            [daysAgo(1250), daysAgo(1101)],
+            [daysAgo(1100), daysAgo(951)],
+            [daysAgo(950), daysAgo(801)],
+            [daysAgo(800), daysAgo(651)],
+            [daysAgo(650), daysAgo(501)],
+            [daysAgo(500), daysAgo(351)],
+            [daysAgo(350), daysAgo(176)],
             [daysAgo(175), today],
           ]
           : period === "W"
@@ -337,12 +349,17 @@ export default async function handler(req: any, res: any) {
       const bymds: string[] =
         period === "D"
           ? [
+              // 10년치 일봉 (37 bymds × ~100일)
               today,
               daysAgo(100), daysAgo(200), daysAgo(300), daysAgo(400),
               daysAgo(500), daysAgo(600), daysAgo(700), daysAgo(800),
               daysAgo(900), daysAgo(1000), daysAgo(1100), daysAgo(1200),
               daysAgo(1300), daysAgo(1400), daysAgo(1500), daysAgo(1600),
-              daysAgo(1700), daysAgo(1800),
+              daysAgo(1700), daysAgo(1800), daysAgo(1900), daysAgo(2000),
+              daysAgo(2100), daysAgo(2200), daysAgo(2300), daysAgo(2400),
+              daysAgo(2500), daysAgo(2600), daysAgo(2700), daysAgo(2800),
+              daysAgo(2900), daysAgo(3000), daysAgo(3100), daysAgo(3200),
+              daysAgo(3300), daysAgo(3400), daysAgo(3500), daysAgo(3600),
             ]
           : period === "W"
             ? [today, daysAgo(700), daysAgo(1400), daysAgo(2100)]

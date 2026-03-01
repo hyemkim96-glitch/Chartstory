@@ -96,8 +96,14 @@ export class AIService {
           ? `[거시경제 / 시장 / 정치 / 글로벌 뉴스]\n${fmtArticles(macroNews)}`
           : "[거시경제 / 시장 / 정치 / 글로벌 뉴스]\n없음";
 
+      // 년봉: 연도 중 가장 임팩트 컸던 사건 중심으로 분석 요청
+      const yearlyInstruction =
+        timeRange === "년"
+          ? "\n이 연도의 뉴스 중 주가 변동에 가장 큰 영향을 미친 핵심 사건 1~2개에 집중하여 분석해 주세요. 사소한 뉴스는 무시하고, 연도를 대표하는 핵심 이벤트만 다루세요."
+          : "";
+
       const prompt = `당신은 한국어로 응답하는 전문 금융 애널리스트입니다.
-${dateLabel} ${symbol} 주가의 ${periodStr} 흐름과 변동 원인을 아래 뉴스를 바탕으로 분석해 주세요.
+${dateLabel} ${symbol} 주가의 ${periodStr} 흐름과 변동 원인을 아래 뉴스를 바탕으로 분석해 주세요.${yearlyInstruction}
 ${priceContext}
 주가는 종목 뉴스 외에도 금리, 정치 이벤트, 지정학적 리스크, 환율, 섹터 이슈, 글로벌 동향 등 다양한 요인에 의해 움직입니다. 두 카테고리 뉴스를 모두 고려하여 원인을 분석하세요.
 

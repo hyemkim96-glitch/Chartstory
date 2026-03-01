@@ -8,12 +8,19 @@ import type {
   QuoteData,
 } from "../types";
 
+export interface WorldEventInfo {
+  label: string;
+  text: string;
+  wikiUrl: string;
+}
+
 interface AppState {
   currentStock: StockMetadata | null;
   timeRange: TimeRange;
   chartData: OHLCVData[];
   selection: ChartSelection | null;
   summary: AISummary | null;
+  worldEvent: WorldEventInfo | null;
   isLoading: boolean;
   error: string | null;
   quote: QuoteData | null;
@@ -24,6 +31,7 @@ interface AppState {
   setChartData: (data: OHLCVData[]) => void;
   setSelection: (selection: ChartSelection | null) => void;
   setSummary: (summary: AISummary | null) => void;
+  setWorldEvent: (event: WorldEventInfo | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setQuote: (quote: QuoteData | null) => void;
@@ -42,6 +50,7 @@ export const useAppStore = create<AppState>((set) => ({
   chartData: [],
   selection: null,
   summary: null,
+  worldEvent: null,
   isLoading: false,
   error: null,
   quote: null,
@@ -52,6 +61,7 @@ export const useAppStore = create<AppState>((set) => ({
   setChartData: (data) => set({ chartData: data }),
   setSelection: (selection) => set({ selection }),
   setSummary: (summary) => set({ summary }),
+  setWorldEvent: (event) => set({ worldEvent: event }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
   setQuote: (quote) => set({ quote }),

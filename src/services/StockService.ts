@@ -256,7 +256,8 @@ export class StockService {
       date: "2018-12-24",
       label: "크리스마스폭락",
       text: "크리스마스 이브 폭락 — 연준 긴축 우려",
-      wikiUrl: "https://en.wikipedia.org/wiki/2018_stock_market_decline",
+      wikiUrl:
+        "https://news.google.com/search?q=2018+%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4+%EC%A6%9D%EC%8B%9C+%ED%8F%AD%EB%9D%BD+%EC%97%B0%EC%A4%80&hl=ko&gl=KR&ceid=KR:ko",
     },
     {
       date: "2020-01-27",
@@ -276,7 +277,8 @@ export class StockService {
       date: "2020-11-09",
       label: "백신",
       text: "화이자 백신 90% 효과 발표 — 강한 반등",
-      wikiUrl: "https://ko.wikipedia.org/wiki/COVID-19_%EB%B0%B1%EC%8B%A0",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/COVID-19_%EB%B0%B1%EC%8B%A0_(%ED%99%94%EC%9D%B4%EC%9E%90-%EB%B0%94%EC%9D%B4%EC%98%A4%EC%97%94%ED%85%8D)",
     },
     {
       date: "2022-02-24",
@@ -290,14 +292,14 @@ export class StockService {
       label: "75bp인상",
       text: "연준, 28년만에 75bp 금리인상 단행",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD_%EC%97%B0%EB%B0%A9%EC%A4%80%EB%B9%84%EC%A0%9C%EB%8F%84",
+        "https://news.google.com/search?q=%EC%97%B0%EC%A4%80+75bp+%EA%B8%88%EB%A6%AC%EC%9D%B8%EC%83%81+2022&hl=ko&gl=KR&ceid=KR:ko",
     },
     {
       date: "2022-10-13",
       label: "CPI쇼크",
       text: "미국 CPI 8.2% — 인플레이션 쇼크",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EC%9D%B8%ED%94%8C%EB%A0%88%EC%9D%B4%EC%85%98",
+        "https://news.google.com/search?q=%EB%AF%B8%EA%B5%AD+CPI+%EC%87%BC%ED%81%AC+%EC%9D%B8%ED%94%8C%EB%A0%88%EC%9D%B4%EC%85%98+2022&hl=ko&gl=KR&ceid=KR:ko",
     },
     {
       date: "2023-03-10",
@@ -311,14 +313,14 @@ export class StockService {
       label: "피벗기대",
       text: "연준 금리동결 — 피벗 기대감 급등",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD_%EC%97%B0%EB%B0%A9%EC%A4%80%EB%B9%84%EC%A0%9C%EB%8F%84",
+        "https://news.google.com/search?q=%EC%97%B0%EC%A4%80+%EA%B8%88%EB%A6%AC%EB%8F%99%EA%B2%B0+%ED%94%BC%EB%B2%97+2023&hl=ko&gl=KR&ceid=KR:ko",
     },
     {
       date: "2024-08-05",
       label: "엔캐리청산",
       text: "일본 금리인상 — 엔 캐리 트레이드 청산 폭락",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EC%BA%90%EB%A6%AC_%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%93%9C",
+        "https://news.google.com/search?q=%EC%97%94+%EC%BA%90%EB%A6%AC+%EC%B2%AD%EC%82%B0+%ED%8F%AD%EB%9D%BD+2024&hl=ko&gl=KR&ceid=KR:ko",
     },
   ];
 

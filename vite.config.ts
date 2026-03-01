@@ -271,18 +271,30 @@ function kisDevPlugin(
               const chunks: [string, string][] =
                 period === "D"
                   ? [
-                    // 5년치 일봉 (병렬 요청)
-                    [daysAgo(1825), daysAgo(1676)],
-                    [daysAgo(1675), daysAgo(1526)],
-                    [daysAgo(1525), daysAgo(1376)],
-                    [daysAgo(1375), daysAgo(1226)],
-                    [daysAgo(1225), daysAgo(1076)],
-                    [daysAgo(1075), daysAgo(926)],
-                    [daysAgo(925), daysAgo(776)],
-                    [daysAgo(775), daysAgo(626)],
-                    [daysAgo(625), daysAgo(476)],
-                    [daysAgo(475), daysAgo(326)],
-                    [daysAgo(325), daysAgo(176)],
+                    // 10년치 일봉 (병렬 요청, 24 chunks × ~150일)
+                    [daysAgo(3650), daysAgo(3501)],
+                    [daysAgo(3500), daysAgo(3351)],
+                    [daysAgo(3350), daysAgo(3201)],
+                    [daysAgo(3200), daysAgo(3051)],
+                    [daysAgo(3050), daysAgo(2901)],
+                    [daysAgo(2900), daysAgo(2751)],
+                    [daysAgo(2750), daysAgo(2601)],
+                    [daysAgo(2600), daysAgo(2451)],
+                    [daysAgo(2450), daysAgo(2301)],
+                    [daysAgo(2300), daysAgo(2151)],
+                    [daysAgo(2150), daysAgo(2001)],
+                    [daysAgo(2000), daysAgo(1851)],
+                    [daysAgo(1850), daysAgo(1701)],
+                    [daysAgo(1700), daysAgo(1551)],
+                    [daysAgo(1550), daysAgo(1401)],
+                    [daysAgo(1400), daysAgo(1251)],
+                    [daysAgo(1250), daysAgo(1101)],
+                    [daysAgo(1100), daysAgo(951)],
+                    [daysAgo(950), daysAgo(801)],
+                    [daysAgo(800), daysAgo(651)],
+                    [daysAgo(650), daysAgo(501)],
+                    [daysAgo(500), daysAgo(351)],
+                    [daysAgo(350), daysAgo(176)],
                     [daysAgo(175), today],
                   ]
                   : period === "W"
@@ -320,12 +332,17 @@ function kisDevPlugin(
               const bymds: string[] =
                 period === "D"
                   ? [
+                      // 10년치 일봉 (37 bymds × ~100일)
                       today,
                       daysAgo(100), daysAgo(200), daysAgo(300), daysAgo(400),
                       daysAgo(500), daysAgo(600), daysAgo(700), daysAgo(800),
                       daysAgo(900), daysAgo(1000), daysAgo(1100), daysAgo(1200),
                       daysAgo(1300), daysAgo(1400), daysAgo(1500), daysAgo(1600),
-                      daysAgo(1700), daysAgo(1800),
+                      daysAgo(1700), daysAgo(1800), daysAgo(1900), daysAgo(2000),
+                      daysAgo(2100), daysAgo(2200), daysAgo(2300), daysAgo(2400),
+                      daysAgo(2500), daysAgo(2600), daysAgo(2700), daysAgo(2800),
+                      daysAgo(2900), daysAgo(3000), daysAgo(3100), daysAgo(3200),
+                      daysAgo(3300), daysAgo(3400), daysAgo(3500), daysAgo(3600),
                     ]
                   : period === "W"
                     ? [today, daysAgo(700), daysAgo(1400), daysAgo(2100)]
@@ -352,9 +369,95 @@ function kisDevPlugin(
 }
 
 // ── News dev middleware plugin ──────────────────────────────────────────────
-// Handles /api/news requests locally, proxying to newsapi.org
+// Handles /api/news requests locally — mirrors api/news.ts behavior exactly
 function newsDevPlugin(apiKey: string): Plugin {
   if (!apiKey) return { name: "news-dev-noop" };
+
+  function getDateRange(
+    date: string,
+    period: string
+  ): { fromDate: string; toDate: string } {
+    const d = new Date(date);
+    if (period === "Y") {
+      const year = d.getUTCFullYear();
+      return { fromDate: `${year}-01-01`, toDate: `${year}-12-31` };
+    }
+    if (period === "M") {
+      const year = d.getUTCFullYear();
+      const month = d.getUTCMonth();
+      const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      const mm = String(month + 1).padStart(2, "0");
+      return {
+        fromDate: `${year}-${mm}-01`,
+        toDate: `${year}-${mm}-${String(lastDay).padStart(2, "0")}`,
+      };
+    }
+    if (period === "W") {
+      const dow = d.getUTCDay();
+      const monday = new Date(d);
+      monday.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1));
+      const sunday = new Date(monday);
+      sunday.setUTCDate(monday.getUTCDate() + 6);
+      return {
+        fromDate: monday.toISOString().split("T")[0],
+        toDate: sunday.toISOString().split("T")[0],
+      };
+    }
+    // D — 전날 ~ 당일
+    const prev = new Date(d);
+    prev.setUTCDate(d.getUTCDate() - 1);
+    return { fromDate: prev.toISOString().split("T")[0], toDate: date };
+  }
+
+  async function fetchRSS(
+    query: string,
+    fromDate: string,
+    toDate: string,
+    hl: string,
+    gl: string,
+    ceid: string,
+    category: "company" | "macro",
+    limit = 5
+  ): Promise<any[]> {
+    const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}+after:${fromDate}+before:${toDate}&hl=${hl}&gl=${gl}&ceid=${ceid}`;
+    const rssRes = await fetch(googleUrl);
+    const rssText = await rssRes.text();
+    const items: any[] = [];
+    const clean = (s: string) => s.replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").trim();
+    for (const match of rssText.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
+      const c = match[1];
+      const title = c.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
+      const link = c.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "";
+      const pubDate = c.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? "";
+      const source = c.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? "";
+      if (title && link) {
+        items.push({
+          title: clean(title).replace(/ - .*$/, ""),
+          description: null,
+          url: clean(link),
+          publishedAt: new Date(pubDate).toISOString(),
+          source: { name: clean(source) },
+          category,
+        });
+      }
+      if (items.length >= limit) break;
+    }
+    return items;
+  }
+
+  async function fetchNewsApi(
+    query: string,
+    fromDate: string,
+    toDate: string,
+    language: string,
+    pageSize: number,
+    category: "company" | "macro"
+  ): Promise<any[]> {
+    const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${toDate}&sortBy=relevancy&language=${language}&pageSize=${pageSize}&apiKey=${apiKey}`;
+    const r = await fetch(apiUrl);
+    const d = (await r.json()) as any;
+    return (d.articles ?? []).map((a: any) => ({ ...a, category }));
+  }
 
   return {
     name: "news-dev-proxy",
@@ -376,62 +479,59 @@ function newsDevPlugin(apiKey: string): Plugin {
             const date = url.searchParams.get("date") ?? "";
             const name = url.searchParams.get("name") ?? "";
             const region = url.searchParams.get("region") ?? "US";
+            const period = url.searchParams.get("period") ?? "D";
 
-            // Broaden search query: (symbol OR name)
-            const query = name ? `${symbol} OR "${name}"` : symbol;
-
-            // Language support: Korean for KR, otherwise English
+            const { fromDate, toDate } = getDateRange(date, period);
             const language = region === "KR" ? "ko" : "en";
+            const hl = region === "KR" ? "ko" : "en-US";
+            const gl = region === "KR" ? "KR" : "US";
+            const ceid = region === "KR" ? "KR:ko" : "US:en";
 
-            // Date range: from (date - 1) to (date)
-            const d = new Date(date);
-            const prev = new Date(d);
-            prev.setDate(prev.getDate() - 1);
-            const fromDate = prev.toISOString().split("T")[0];
+            const year = new Date(date).getUTCFullYear();
+            const yearSuffix = period === "Y"
+              ? (region === "KR" ? ` ${year}년` : ` ${year}`)
+              : "";
+            const stockQuery = name
+              ? `${symbol} OR "${name}"${yearSuffix}`
+              : symbol + yearSuffix;
+            const macroQuery =
+              region === "KR"
+                ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 외국인매도 OR 미중무역"
+                : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff"';
+            const politicsQuery =
+              region === "KR"
+                ? "대통령 OR 탄핵 OR 계엄 OR 국회 OR 정치 OR 여야 OR 정권"
+                : null;
 
-            const diffDays = (new Date().getTime() - d.getTime()) / (1000 * 3600 * 24);
+            const diffDays =
+              (Date.now() - new Date(fromDate).getTime()) / (1000 * 3600 * 24);
 
+            const companyLimit = period === "Y" ? 7 : 5;
+            const macroLimit = period === "Y" ? 4 : 3;
+            const politicsLimit = 3;
+
+            let articles: any[] = [];
             if (diffDays > 28) {
-              console.log(`[newsDevPlugin] Date ${date} is old. Using Google News RSS fallback.`);
-              const googleQuery = name ? `${name} ${symbol}` : symbol;
-              const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}+after:${fromDate}+before:${date}&hl=${language === "ko" ? "ko" : "en"}&gl=${region === "KR" ? "KR" : "US"}&ceid=${region === "KR" ? "KR:ko" : "US:en"}`;
-
-              const rssRes = await fetch(googleUrl);
-              const rssText = await rssRes.text();
-
-              const items: any[] = [];
-              const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
-
-              for (const match of itemMatches) {
-                const content = match[1];
-                const title = content.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
-                const link = content.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "";
-                const pubDate = content.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? "";
-                const source = content.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? "";
-
-                const clean = (str: string) => str.replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").trim();
-
-                if (title && link) {
-                  items.push({
-                    title: clean(title).replace(/ - .*$/, ""),
-                    url: clean(link),
-                    publishedAt: new Date(pubDate).toISOString(),
-                    source: { name: clean(source) }
-                  });
-                }
-                if (items.length >= 10) break;
+              const requests = [
+                fetchRSS(stockQuery, fromDate, toDate, hl, gl, ceid, "company", companyLimit),
+                fetchRSS(macroQuery, fromDate, toDate, hl, gl, ceid, "macro", macroLimit),
+              ];
+              if (politicsQuery) {
+                requests.push(fetchRSS(politicsQuery, fromDate, toDate, hl, gl, ceid, "macro", politicsLimit));
               }
-
-              res.setHeader("Content-Type", "application/json");
-              res.end(JSON.stringify({ articles: items }));
-              return;
+              articles = (await Promise.all(requests)).flat();
+            } else {
+              const requests = [
+                fetchNewsApi(stockQuery, fromDate, toDate, language, companyLimit, "company"),
+                fetchNewsApi(macroQuery, fromDate, toDate, language, macroLimit, "macro"),
+              ];
+              if (politicsQuery) {
+                requests.push(fetchNewsApi(politicsQuery, fromDate, toDate, language, politicsLimit, "macro"));
+              }
+              articles = (await Promise.all(requests)).flat();
             }
 
-            const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${date}&sortBy=relevancy&language=${language}&pageSize=10&apiKey=${apiKey}`;
-            const upstream = await fetch(apiUrl);
-            const data = await upstream.json();
-            res.statusCode = upstream.status;
-            res.end(JSON.stringify(data));
+            res.end(JSON.stringify({ articles }));
           } catch (err) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(err) }));
