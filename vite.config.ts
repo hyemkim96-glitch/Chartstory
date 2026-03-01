@@ -38,7 +38,7 @@ function kisDevPlugin(
       }),
     });
     if (!res.ok) throw new Error(`KIS 토큰 발급 실패: ${res.status}`);
-    const d = await res.json();
+    const d = (await res.json()) as any;
     tokenCache = {
       token: d.access_token,
       exp: Date.now() + (d.expires_in - 300) * 1000,
@@ -94,7 +94,7 @@ function kisDevPlugin(
     const res = await fetch(url.toString(), {
       headers: kisHeaders(token, "FHKST03010100"),
     });
-    const d = await res.json();
+    const d = (await res.json()) as any;
     return (d.output2 ?? [])
       .map((r: Record<string, string>) => ({
         time: toIso(r.stck_bsop_date),
@@ -126,7 +126,7 @@ function kisDevPlugin(
     const res = await fetch(url.toString(), {
       headers: kisHeaders(token, "HHDFS76240000"),
     });
-    const d = await res.json();
+    const d = (await res.json()) as any;
     return (d.output2 ?? [])
       .map((r: Record<string, string>) => ({
         time: toIso(r.xymd),
@@ -212,7 +212,7 @@ function kisDevPlugin(
               const qRes = await fetch(quoteUrl.toString(), {
                 headers: kisHeaders(token, isKorean ? "FHKST01010100" : "HHDFS00000300"),
               });
-              const qd = await qRes.json();
+              const qd = (await qRes.json()) as any;
               if (qd.rt_cd !== "0" || !qd.output) {
                 res.statusCode = 404;
                 res.end(JSON.stringify({ error: "시세 데이터 없음" }));
