@@ -43,9 +43,10 @@ function fmtMarketCap(cap: number | undefined, currency: string): string {
     if (cap >= 10000) return (cap / 10000).toFixed(1) + "조";
     return cap.toLocaleString("ko-KR") + "억";
   }
-  // US Market Cap usually in Billions/Trillions
-  if (cap >= 1000) return (cap / 1000).toFixed(2) + "T";
-  return cap.toFixed(2) + "B";
+  // US Market Cap comes in Million USD
+  if (cap >= 1000000) return (cap / 1000000).toFixed(2) + "T";
+  if (cap >= 1000) return (cap / 1000).toFixed(2) + "B";
+  return cap.toFixed(2) + "M";
 }
 
 function fmtPer(per: number | undefined): string {

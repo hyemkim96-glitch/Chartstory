@@ -16,13 +16,29 @@ export default async function handler(req: any, res: any) {
         const url = new URL(req.url, "http://localhost");
         const symbol = url.searchParams.get("symbol") ?? "";
         const date = url.searchParams.get("date") ?? "";
+        const name = url.searchParams.get("name") ?? "";
+        const region = url.searchParams.get("region") ?? "US";
 
         if (!symbol || !date) {
             return res.status(400).json({ error: "symbol, date 파라미터가 필요합니다." });
         }
 
-        const query = encodeURIComponent(symbol);
-        const apiUrl = `${NEWSAPI_BASE}/everything?q=${query}&from=${date}&to=${date}&sortBy=relevancy&language=en&pageSize=5&apiKey=${NEWSAPI_KEY}`;
+        // Broaden search query: (symbol OR name)
+        // For KR stocks, Name is often better for news search
+        const query = name ? `${symbol} OR "${name}"` : symbol;
+
+        // Language support: Korean for KR, otherwise English
+        const language = region === "KR" ? "ko" : "en";
+
+        // Date range: from (date - 1) to (date) to catch related news
+        const d = new Date(date);
+        const prev = new Date(d);
+        prev.setDate(prev.getDate() - 1);
+        const fromDate = prev.toISOString().split("T")[0];
+
+        const apiUrl = `${NEWSAPI_BASE}/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${date}&sortBy=relevancy&language=${language}&pageSize=10&apiKey=${NEWSAPI_KEY}`;
+
+        console.log(`[api/news] Proxying to: ${apiUrl}`);
 
         const response = await fetch(apiUrl);
         const data = await response.json();

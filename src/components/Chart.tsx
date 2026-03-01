@@ -166,10 +166,7 @@ export default function Chart() {
         setLoading(true);
         setError(null);
         try {
-          const news = await NewsService.getNewsForDate(
-            currentStock.symbol,
-            dateStr
-          );
+          const news = await NewsService.getNewsForDate(dateStr, currentStock);
           const summary = await AIService.summarizeNews(
             currentStock.symbol,
             dateStr,

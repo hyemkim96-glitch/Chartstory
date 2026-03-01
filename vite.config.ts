@@ -209,32 +209,57 @@ function kisDevPlugin(
                 quoteUrl.searchParams.set("EXCD", excd);
                 quoteUrl.searchParams.set("SYMB", symbol);
               }
-              const qRes = await fetch(quoteUrl.toString(), {
-                headers: kisHeaders(token, isKorean ? "FHKST01010100" : "HHDFS00000300"),
-              });
-              const qd = (await qRes.json()) as any;
-              if (qd.rt_cd !== "0" || !qd.output) {
-                res.statusCode = 404;
-                res.end(JSON.stringify({ error: "시세 데이터 없음" }));
-                return;
-              }
-              const o = qd.output;
-              const quote = isKorean
-                ? {
+              if (isKorean) {
+                const qRes = await fetch(quoteUrl.toString(), {
+                  headers: kisHeaders(token, "FHKST01010100"),
+                });
+                const qd = (await qRes.json()) as any;
+                if (qd.rt_cd !== "0" || !qd.output) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ error: "시세 데이터 없음" }));
+                  return;
+                }
+                const o = qd.output;
+                res.end(JSON.stringify({
                   price: Number(o.stck_prpr),
                   change: Number(o.prdy_vrss),
                   changeRate: Number(o.prdy_ctrt),
                   marketCap: Number(o.hts_avls),
                   per: Number(o.per) || undefined,
                   currency: "KRW",
+                }));
+              } else {
+                // US stock fundamental data requires a separate call
+                const infoUrl = new URL(`${KIS_BASE}/uapi/overseas-price/v1/quotations/search-info`);
+                infoUrl.searchParams.set("AUTH", "");
+                infoUrl.searchParams.set("EXCD", excd);
+                infoUrl.searchParams.set("SYMB", symbol);
+
+                const [qRes, infoRes] = await Promise.all([
+                  fetch(quoteUrl.toString(), { headers: kisHeaders(token, "HHDFS00000300") }),
+                  fetch(infoUrl.toString(), { headers: kisHeaders(token, "HHDFS00000500") }).catch(() => null)
+                ]);
+
+                const qd = (await qRes.json()) as any;
+                const id = infoRes ? (await infoRes.json()) as any : null;
+
+                if (qd.rt_cd !== "0" || !qd.output) {
+                  res.statusCode = 404;
+                  res.end(JSON.stringify({ error: "시세 데이터 없음" }));
+                  return;
                 }
-                : {
+                const o = qd.output;
+                const io = id?.output;
+
+                res.end(JSON.stringify({
                   price: Number(o.last),
                   change: Number(o.diff),
                   changeRate: Number(o.rate),
+                  marketCap: io ? Number(io.tomv) : undefined, // Million USD
+                  per: io ? Number(io.perx) : undefined,
                   currency: "USD",
-                };
-              res.end(JSON.stringify(quote));
+                }));
+              }
               return;
             }
 
@@ -334,8 +359,22 @@ function newsDevPlugin(apiKey: string): Plugin {
             const url = new URL(req.url, "http://localhost");
             const symbol = url.searchParams.get("symbol") ?? "";
             const date = url.searchParams.get("date") ?? "";
-            const query = encodeURIComponent(symbol);
-            const apiUrl = `https://newsapi.org/v2/everything?q=${query}&from=${date}&to=${date}&sortBy=relevancy&language=en&pageSize=5&apiKey=${apiKey}`;
+            const name = url.searchParams.get("name") ?? "";
+            const region = url.searchParams.get("region") ?? "US";
+
+            // Broaden search query: (symbol OR name)
+            const query = name ? `${symbol} OR "${name}"` : symbol;
+
+            // Language support: Korean for KR, otherwise English
+            const language = region === "KR" ? "ko" : "en";
+
+            // Date range: from (date - 1) to (date)
+            const d = new Date(date);
+            const prev = new Date(d);
+            prev.setDate(prev.getDate() - 1);
+            const fromDate = prev.toISOString().split("T")[0];
+
+            const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${date}&sortBy=relevancy&language=${language}&pageSize=10&apiKey=${apiKey}`;
             const upstream = await fetch(apiUrl);
             const data = await upstream.json();
             res.statusCode = upstream.status;

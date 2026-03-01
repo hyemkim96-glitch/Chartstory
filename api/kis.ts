@@ -178,38 +178,55 @@ async function fetchKRQuote(token: string, symbol: string) {
   if (d.rt_cd !== "0" || !d.output) return null;
   const o = d.output;
 
-  return {
+  const rtData = {
     price: Number(o.stck_prpr),
     change: Number(o.prdy_vrss),
     changeRate: Number(o.prdy_ctrt),
-    marketCap: Number(o.hts_avls), // 억원
+    marketCap: Number(o.hts_avls), // 억원 단위로 추정
     per: Number(o.per) || undefined,
     currency: "KRW",
   };
+  console.log(`[KIS KR] ${symbol} raw marketCap: ${o.hts_avls}, mapped: ${rtData.marketCap}`);
+  return rtData;
 }
 
 // ── US stock quote ─────────────────────────────────────────────────────────
 async function fetchUSQuote(token: string, symbol: string, excd: string) {
-  const url = new URL(
-    `${KIS_BASE}/uapi/overseas-price/v1/quotations/price`
-  );
-  url.searchParams.set("AUTH", "");
-  url.searchParams.set("EXCD", excd);
-  url.searchParams.set("SYMB", symbol);
+  // 1. Price data (Real-time)
+  const priceUrl = new URL(`${KIS_BASE}/uapi/overseas-price/v1/quotations/price`);
+  priceUrl.searchParams.set("AUTH", "");
+  priceUrl.searchParams.set("EXCD", excd);
+  priceUrl.searchParams.set("SYMB", symbol);
 
-  const res = await fetch(url.toString(), {
-    headers: kisHeaders(token, "HHDFS00000300"),
-  });
-  const d = await res.json();
-  if (d.rt_cd !== "0" || !d.output) return null;
-  const o = d.output;
+  // 2. Fundamental data (Search info)
+  const infoUrl = new URL(`${KIS_BASE}/uapi/overseas-price/v1/quotations/search-info`);
+  infoUrl.searchParams.set("AUTH", "");
+  infoUrl.searchParams.set("EXCD", excd);
+  infoUrl.searchParams.set("SYMB", symbol);
 
-  return {
-    price: Number(o.last),
-    change: Number(o.diff),
-    changeRate: Number(o.rate),
+  const [priceRes, infoRes] = await Promise.all([
+    fetch(priceUrl.toString(), { headers: kisHeaders(token, "HHDFS00000300") }),
+    fetch(infoUrl.toString(), { headers: kisHeaders(token, "HHDFS00000500") }).catch(() => null)
+  ]);
+
+  const pData = await priceRes.json();
+  const iData = infoRes ? await infoRes.json() : null;
+
+  if (pData.rt_cd !== "0" || !pData.output) return null;
+  const po = pData.output;
+  const io = iData?.output;
+
+  const rtData = {
+    price: Number(po.last),
+    change: Number(po.diff),
+    changeRate: Number(po.rate),
+    marketCap: io ? Number(io.tomv) : undefined, // tomv: 시가총액 (Million USD)
+    per: io ? Number(io.perx) : undefined, // perx: PER
     currency: "USD",
   };
+
+  console.log(`[KIS US] ${symbol} price: ${rtData.price}, per: ${rtData.per}, marketCap: ${rtData.marketCap}`);
+  return rtData;
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
