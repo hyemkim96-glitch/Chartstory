@@ -257,35 +257,35 @@ export default async function handler(req: any, res: any) {
       const chunks: [string, string][] =
         period === "D"
           ? [
-              [daysAgo(730), daysAgo(580)],
-              [daysAgo(579), daysAgo(420)],
-              [daysAgo(419), daysAgo(260)],
-              [daysAgo(259), daysAgo(100)],
-              [daysAgo(99), today],
-            ]
+            [daysAgo(730), daysAgo(580)],
+            [daysAgo(579), daysAgo(420)],
+            [daysAgo(419), daysAgo(260)],
+            [daysAgo(259), daysAgo(100)],
+            [daysAgo(99), today],
+          ]
           : period === "W"
             ? [
-                [daysAgo(1825), daysAgo(1126)],
-                [daysAgo(1125), daysAgo(426)],
-                [daysAgo(425), today],
-              ]
+              [daysAgo(1825), daysAgo(1126)],
+              [daysAgo(1125), daysAgo(426)],
+              [daysAgo(425), today],
+            ]
             : period === "M"
               ? [
-                  [daysAgo(3650), daysAgo(1826)],
-                  [daysAgo(1825), today],
-                ]
+                [daysAgo(3650), daysAgo(1826)],
+                [daysAgo(1825), today],
+              ]
               : // Y — fetch monthly for ~20 years then aggregate
-                [
-                  [daysAgo(7300), daysAgo(5476)],
-                  [daysAgo(5475), daysAgo(3651)],
-                  [daysAgo(3650), daysAgo(1826)],
-                  [daysAgo(1825), today],
-                ];
+              [
+                [daysAgo(7300), daysAgo(5476)],
+                [daysAgo(5475), daysAgo(3651)],
+                [daysAgo(3650), daysAgo(1826)],
+                [daysAgo(1825), today],
+              ];
 
-      for (const [from, to] of chunks) {
-        const chunk = await fetchKR(token, symbol, kisPeriod, from, to);
-        rows.push(...chunk);
-      }
+      const chunkResults = await Promise.all(
+        chunks.map(([from, to]) => fetchKR(token, symbol, kisPeriod, from, to))
+      );
+      rows = chunkResults.flat();
 
       rows = dedup(rows);
       if (period === "Y") rows = toYearly(rows);
@@ -302,10 +302,10 @@ export default async function handler(req: any, res: any) {
             ? [today, daysAgo(700), daysAgo(1400), daysAgo(2100)]
             : [today, daysAgo(3000), daysAgo(6000)];
 
-      for (const bymd of bymds) {
-        const chunk = await fetchUS(token, symbol, excd, gubn, bymd);
-        rows.push(...chunk);
-      }
+      const usResults = await Promise.all(
+        bymds.map((bymd) => fetchUS(token, symbol, excd, gubn, bymd))
+      );
+      rows = usResults.flat();
 
       rows = dedup(rows);
       if (period === "Y") rows = toYearly(rows);

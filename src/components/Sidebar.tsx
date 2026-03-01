@@ -114,14 +114,19 @@ export default function Sidebar({ className }: SidebarProps) {
                   <a
                     key={idx}
                     href={link.url}
-                    target="_blank"
+                    target={link.url === "#" ? undefined : "_blank"}
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between px-3 py-2 bg-surface-03 border border-default hover:border-[#1A6EFF] transition-colors group"
+                    onClick={
+                      link.url === "#" ? (e) => e.preventDefault() : undefined
+                    }
+                    className={`flex items-center justify-between px-3 py-2 bg-surface-03 border border-default transition-colors group ${link.url === "#" ? "cursor-default opacity-60" : "hover:border-[#1A6EFF]"}`}
                   >
                     <span className="text-xs text-secondary group-hover:text-primary truncate pr-3 transition-colors">
                       {link.title}
                     </span>
-                    <ExternalLink className="w-3 h-3 shrink-0 text-placeholder group-hover:text-[#1A6EFF] transition-colors" />
+                    {link.url !== "#" && (
+                      <ExternalLink className="w-3 h-3 shrink-0 text-placeholder group-hover:text-[#1A6EFF] transition-colors" />
+                    )}
                   </a>
                 ))}
               </div>

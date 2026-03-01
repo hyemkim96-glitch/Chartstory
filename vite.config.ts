@@ -221,19 +221,19 @@ function kisDevPlugin(
               const o = qd.output;
               const quote = isKorean
                 ? {
-                    price: Number(o.stck_prpr),
-                    change: Number(o.prdy_vrss),
-                    changeRate: Number(o.prdy_ctrt),
-                    marketCap: Number(o.hts_avls),
-                    per: Number(o.per) || undefined,
-                    currency: "KRW",
-                  }
+                  price: Number(o.stck_prpr),
+                  change: Number(o.prdy_vrss),
+                  changeRate: Number(o.prdy_ctrt),
+                  marketCap: Number(o.hts_avls),
+                  per: Number(o.per) || undefined,
+                  currency: "KRW",
+                }
                 : {
-                    price: Number(o.last),
-                    change: Number(o.diff),
-                    changeRate: Number(o.rate),
-                    currency: "USD",
-                  };
+                  price: Number(o.last),
+                  change: Number(o.diff),
+                  changeRate: Number(o.rate),
+                  currency: "USD",
+                };
               res.end(JSON.stringify(quote));
               return;
             }
@@ -246,34 +246,34 @@ function kisDevPlugin(
               const chunks: [string, string][] =
                 period === "D"
                   ? [
-                      [daysAgo(730), daysAgo(580)],
-                      [daysAgo(579), daysAgo(420)],
-                      [daysAgo(419), daysAgo(260)],
-                      [daysAgo(259), daysAgo(100)],
-                      [daysAgo(99), today],
-                    ]
+                    [daysAgo(730), daysAgo(580)],
+                    [daysAgo(579), daysAgo(420)],
+                    [daysAgo(419), daysAgo(260)],
+                    [daysAgo(259), daysAgo(100)],
+                    [daysAgo(99), today],
+                  ]
                   : period === "W"
                     ? [
-                        [daysAgo(1825), daysAgo(1126)],
-                        [daysAgo(1125), daysAgo(426)],
-                        [daysAgo(425), today],
-                      ]
+                      [daysAgo(1825), daysAgo(1126)],
+                      [daysAgo(1125), daysAgo(426)],
+                      [daysAgo(425), today],
+                    ]
                     : period === "M"
                       ? [
-                          [daysAgo(3650), daysAgo(1826)],
-                          [daysAgo(1825), today],
-                        ]
+                        [daysAgo(3650), daysAgo(1826)],
+                        [daysAgo(1825), today],
+                      ]
                       : [
-                          [daysAgo(7300), daysAgo(5476)],
-                          [daysAgo(5475), daysAgo(3651)],
-                          [daysAgo(3650), daysAgo(1826)],
-                          [daysAgo(1825), today],
-                        ];
+                        [daysAgo(7300), daysAgo(5476)],
+                        [daysAgo(5475), daysAgo(3651)],
+                        [daysAgo(3650), daysAgo(1826)],
+                        [daysAgo(1825), today],
+                      ];
 
-              for (const [from, to] of chunks) {
-                const chunk = await fetchKR(token, symbol, kisPeriod, from, to);
-                rows.push(...chunk);
-              }
+              const krResults = await Promise.all(
+                chunks.map(([from, to]) => fetchKR(token, symbol, kisPeriod, from, to))
+              );
+              rows = krResults.flat();
               rows = dedup(rows);
               if (period === "Y") rows = toYearly(rows);
             } else {
@@ -291,10 +291,10 @@ function kisDevPlugin(
                     ? [today, daysAgo(700), daysAgo(1400), daysAgo(2100)]
                     : [today, daysAgo(3000), daysAgo(6000)];
 
-              for (const bymd of bymds) {
-                const chunk = await fetchUS(token, symbol, excd, gubn, bymd);
-                rows.push(...chunk);
-              }
+              const usResults = await Promise.all(
+                bymds.map((bymd) => fetchUS(token, symbol, excd, gubn, bymd))
+              );
+              rows = usResults.flat();
               rows = dedup(rows);
               if (period === "Y") rows = toYearly(rows);
             }
@@ -302,6 +302,45 @@ function kisDevPlugin(
             res.end(JSON.stringify(rows));
           } catch (err) {
             console.error("KIS dev proxy 오류:", err);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        }
+      );
+    },
+  };
+}
+
+// ── News dev middleware plugin ──────────────────────────────────────────────
+// Handles /api/news requests locally, proxying to newsapi.org
+function newsDevPlugin(apiKey: string): Plugin {
+  if (!apiKey) return { name: "news-dev-noop" };
+
+  return {
+    name: "news-dev-proxy",
+    configureServer(server) {
+      server.middlewares.use(
+        async (
+          req: IncomingMessage,
+          res: ServerResponse,
+          next: () => void
+        ) => {
+          if (!req.url?.startsWith("/api/news")) return next();
+
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+
+          try {
+            const url = new URL(req.url, "http://localhost");
+            const symbol = url.searchParams.get("symbol") ?? "";
+            const date = url.searchParams.get("date") ?? "";
+            const query = encodeURIComponent(symbol);
+            const apiUrl = `https://newsapi.org/v2/everything?q=${query}&from=${date}&to=${date}&sortBy=relevancy&language=en&pageSize=5&apiKey=${apiKey}`;
+            const upstream = await fetch(apiUrl);
+            const data = await upstream.json();
+            res.statusCode = upstream.status;
+            res.end(JSON.stringify(data));
+          } catch (err) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: String(err) }));
           }
@@ -324,19 +363,11 @@ export default defineConfig(({ mode }) => {
         env.KIS_APP_SECRET,
         env.KIS_ACCOUNT_TYPE ?? "real"
       ),
+      newsDevPlugin(env.NEWSAPI_KEY),
     ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-      },
-    },
-    server: {
-      proxy: {
-        "/news-api": {
-          target: "https://newsapi.org/v2",
-          changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/news-api/, ""),
-        },
       },
     },
   };

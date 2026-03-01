@@ -67,33 +67,30 @@ const sources = [
 ];
 
 export class NewsService {
-  private static readonly API_KEY = import.meta.env.VITE_NEWS_API_KEY;
-
   static async getNewsForDate(
     symbol: string,
     date: string
   ): Promise<NewsItem[]> {
     console.log(`Fetching news for ${symbol} on ${date}`);
 
-    if (this.API_KEY) {
-      try {
-        const response = await fetch(
-          `/news-api/everything?q=${symbol}&from=${date}&to=${date}&sortBy=relevancy&apiKey=${this.API_KEY}`
-        );
-        const data = await response.json();
+    try {
+      // /api/news works in both dev (via vite plugin) and Vercel (serverless fn)
+      const response = await fetch(
+        `/api/news?symbol=${encodeURIComponent(symbol)}&date=${date}`
+      );
+      const data = await response.json();
 
-        if (data.status === "ok" && data.articles.length > 0) {
-          return data.articles.slice(0, 5).map((a: NewsApiArticle) => ({
-            title: a.title,
-            description: a.description || a.content || "",
-            url: a.url,
-            source: a.source.name,
-            publishedAt: a.publishedAt,
-          }));
-        }
-      } catch (err) {
-        console.error("NewsAPI Error:", err);
+      if (response.ok && data.articles && data.articles.length > 0) {
+        return data.articles.slice(0, 5).map((a: NewsApiArticle) => ({
+          title: a.title,
+          description: a.description || a.content || "",
+          url: a.url,
+          source: a.source.name,
+          publishedAt: a.publishedAt,
+        }));
       }
+    } catch (err) {
+      console.warn("NewsAPI 호출 실패, 목업 데이터 사용:", err);
     }
 
     // Date-seeded mock news — different for every (symbol, date) combination

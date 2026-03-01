@@ -142,9 +142,9 @@ export class StockService {
     const url = `/api/kis?${params.toString()}`;
 
     try {
-      // 5 s timeout — falls back to mock quickly in dev without vercel dev
+      // 30 s timeout — KIS API calls run in parallel on the server
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 5000);
+      const timer = setTimeout(() => controller.abort(), 30000);
 
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);

@@ -102,11 +102,6 @@ export default function Header() {
           </div>
         )}
       </div>
-
-      {/* 유저 아바타 */}
-      <div className="w-8 h-8 border border-default flex items-center justify-center text-xs font-semibold text-secondary cursor-pointer hover:border-[#1A6EFF] hover:text-primary transition-colors shrink-0">
-        JD
-      </div>
     </header>
   );
 }
