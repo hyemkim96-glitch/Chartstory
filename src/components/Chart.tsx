@@ -100,7 +100,8 @@ export default function Chart() {
       try {
         const stockData = await StockService.getChartData(
           currentStock.symbol,
-          timeRange
+          timeRange,
+          currentStock
         );
         if (!isCancelled && seriesRef.current) {
           seriesRef.current.setData(stockData as CandlestickData<Time>[]);

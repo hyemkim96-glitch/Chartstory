@@ -1,7 +1,12 @@
-import type { OHLCVData, TimeRange, MarketEvent } from "../types";
+import type {
+  OHLCVData,
+  TimeRange,
+  MarketEvent,
+  StockMetadata,
+} from "../types";
 import type { Time } from "lightweight-charts";
 
-// Deterministic pseudo-random generator seeded by symbol
+// ── Seeded mock fallback (used when KIS API unavailable) ─────────────────────
 function seededRand(seed: string): () => number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -15,24 +20,21 @@ function seededRand(seed: string): () => number {
   };
 }
 
-// Generate daily OHLCV data going back `days` calendar days from today
-function generateDailyData(symbol: string, days: number): OHLCVData[] {
+function generateMock(symbol: string, days: number): OHLCVData[] {
   const data: OHLCVData[] = [];
   const now = new Date();
   const rand = seededRand(symbol);
-  let lastClose = 100 + rand() * 200;
+  let last = 100 + rand() * 200;
 
   for (let i = days; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
     if (date.getDay() === 0 || date.getDay() === 6) continue;
-
     const time = date.toISOString().split("T")[0];
-    const open = lastClose + (rand() - 0.5) * 5;
+    const open = last + (rand() - 0.5) * 5;
     const high = Math.max(open, open + rand() * 5);
     const low = Math.min(open, open - rand() * 5);
     const close = low + rand() * (high - low);
-
     data.push({
       time: time as Time,
       open: Number(open.toFixed(2)),
@@ -41,97 +43,134 @@ function generateDailyData(symbol: string, days: number): OHLCVData[] {
       close: Number(close.toFixed(2)),
       value: Math.floor(rand() * 1000000),
     });
-    lastClose = close;
+    last = close;
   }
   return data;
 }
 
-// Aggregate daily data into weekly candles (week starts Monday)
 function aggregateWeekly(daily: OHLCVData[]): OHLCVData[] {
-  const weeks = new Map<string, OHLCVData>();
+  const map = new Map<string, OHLCVData>();
   for (const d of daily) {
     const date = new Date(d.time as string);
     const dow = date.getUTCDay();
     const monday = new Date(date);
     monday.setUTCDate(date.getUTCDate() - (dow === 0 ? 6 : dow - 1));
     const key = monday.toISOString().split("T")[0];
-    if (!weeks.has(key)) {
-      weeks.set(key, { ...d, time: key as Time });
+    if (!map.has(key)) {
+      map.set(key, { ...d, time: key as Time });
     } else {
-      const w = weeks.get(key)!;
+      const w = map.get(key)!;
       w.high = Math.max(w.high, d.high);
       w.low = Math.min(w.low, d.low);
       w.close = d.close;
       w.value = (w.value ?? 0) + (d.value ?? 0);
     }
   }
-  return [...weeks.values()];
+  return [...map.values()];
 }
 
-// Aggregate daily data into monthly candles (key = YYYY-MM-01)
 function aggregateMonthly(daily: OHLCVData[]): OHLCVData[] {
-  const months = new Map<string, OHLCVData>();
+  const map = new Map<string, OHLCVData>();
   for (const d of daily) {
-    const key = (d.time as string).substring(0, 7) + "-01";
-    if (!months.has(key)) {
-      months.set(key, { ...d, time: key as Time });
+    const key = (d.time as string).slice(0, 7) + "-01";
+    if (!map.has(key)) {
+      map.set(key, { ...d, time: key as Time });
     } else {
-      const m = months.get(key)!;
+      const m = map.get(key)!;
       m.high = Math.max(m.high, d.high);
       m.low = Math.min(m.low, d.low);
       m.close = d.close;
       m.value = (m.value ?? 0) + (d.value ?? 0);
     }
   }
-  return [...months.values()];
+  return [...map.values()];
 }
 
-// Aggregate daily data into yearly candles (key = YYYY-01-01)
 function aggregateYearly(daily: OHLCVData[]): OHLCVData[] {
-  const years = new Map<string, OHLCVData>();
+  const map = new Map<string, OHLCVData>();
   for (const d of daily) {
-    const key = (d.time as string).substring(0, 4) + "-01-01";
-    if (!years.has(key)) {
-      years.set(key, { ...d, time: key as Time });
+    const key = (d.time as string).slice(0, 4) + "-01-01";
+    if (!map.has(key)) {
+      map.set(key, { ...d, time: key as Time });
     } else {
-      const y = years.get(key)!;
+      const y = map.get(key)!;
       y.high = Math.max(y.high, d.high);
       y.low = Math.min(y.low, d.low);
       y.close = d.close;
       y.value = (y.value ?? 0) + (d.value ?? 0);
     }
   }
-  return [...years.values()];
+  return [...map.values()];
 }
 
+function getMockData(symbol: string, range: TimeRange): OHLCVData[] {
+  const daysMap: Record<TimeRange, number> = {
+    일: 730,
+    주: 1825,
+    월: 5475,
+    년: 9125,
+  };
+  const daily = generateMock(symbol, daysMap[range]);
+  if (range === "주") return aggregateWeekly(daily);
+  if (range === "월") return aggregateMonthly(daily);
+  if (range === "년") return aggregateYearly(daily);
+  return daily;
+}
+
+// ── Period mapping for KIS API ───────────────────────────────────────────────
+const PERIOD_MAP: Record<TimeRange, string> = {
+  일: "D",
+  주: "W",
+  월: "M",
+  년: "Y",
+};
+
+// ── Main service ─────────────────────────────────────────────────────────────
 export class StockService {
   static async getChartData(
     symbol: string,
-    range: TimeRange
+    range: TimeRange,
+    stock?: StockMetadata
   ): Promise<OHLCVData[]> {
-    console.log(`Fetching data for ${symbol} (${range})`);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    console.log(`차트 데이터 요청: ${symbol} (${range})`);
 
-    switch (range) {
-      case "일": {
-        // 2년치 일봉
-        return generateDailyData(symbol, 730);
-      }
-      case "주": {
-        // 5년치 일봉 → 주봉으로 집계
-        const daily = generateDailyData(symbol, 1825);
-        return aggregateWeekly(daily);
-      }
-      case "월": {
-        // 15년치 일봉 → 월봉으로 집계
-        const daily = generateDailyData(symbol, 5475);
-        return aggregateMonthly(daily);
-      }
-      case "년": {
-        // 25년치 일봉 → 년봉으로 집계
-        const daily = generateDailyData(symbol, 9125);
-        return aggregateYearly(daily);
-      }
+    const period = PERIOD_MAP[range];
+    const exchange = stock?.exchange ?? "NASDAQ";
+
+    const params = new URLSearchParams({ symbol, period, exchange });
+    const url = `/api/kis?${params.toString()}`;
+
+    try {
+      // 5 s timeout — falls back to mock quickly in dev without vercel dev
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+
+      if (!res.ok) throw new Error(`KIS API ${res.status}`);
+      const rows: Array<{
+        time: string;
+        open: number;
+        high: number;
+        low: number;
+        close: number;
+        value: number;
+      }> = await res.json();
+
+      if (rows.length === 0) throw new Error("데이터 없음");
+
+      return rows.map((r) => ({
+        time: r.time as Time,
+        open: r.open,
+        high: r.high,
+        low: r.low,
+        close: r.close,
+        value: r.value,
+      }));
+    } catch (err) {
+      console.warn("KIS API 실패, 목업 데이터 사용:", err);
+      return getMockData(symbol, range);
     }
   }
 
@@ -140,21 +179,21 @@ export class StockService {
     data: OHLCVData[]
   ): Promise<MarketEvent[]> {
     const events: MarketEvent[] = [];
-    data.forEach((d) => {
-      const volatility = (d.high - d.low) / d.open;
-      if (volatility > 0.03 && events.length < 5) {
+    for (const d of data) {
+      const vol = (d.high - d.low) / d.open;
+      if (vol > 0.03 && events.length < 5) {
         events.push({
           time: d.time,
           label: "●",
           text: `${symbol} 주요 이벤트`,
         });
       }
-    });
+    }
     return events;
   }
 
-  static async searchStocks(query: string) {
-    const allStocks = [
+  static async searchStocks(query: string): Promise<StockMetadata[]> {
+    const all: StockMetadata[] = [
       {
         symbol: "AAPL",
         name: "Apple Inc.",
@@ -184,18 +223,67 @@ export class StockService {
         currency: "KRW",
       },
       {
+        symbol: "000660.KS",
+        name: "SK하이닉스",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
         symbol: "035420.KS",
         name: "NAVER",
         exchange: "KRX",
         region: "KR",
         currency: "KRW",
       },
+      {
+        symbol: "035720.KS",
+        name: "카카오",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
+        symbol: "051910.KS",
+        name: "LG화학",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
+        symbol: "006400.KS",
+        name: "삼성SDI",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
+        symbol: "207940.KS",
+        name: "삼성바이오로직스",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
+        symbol: "005380.KS",
+        name: "현대차",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
+      {
+        symbol: "000270.KS",
+        name: "기아",
+        exchange: "KRX",
+        region: "KR",
+        currency: "KRW",
+      },
     ];
 
-    return allStocks.filter(
+    const q = query.toLowerCase();
+    return all.filter(
       (s) =>
-        s.symbol.toLowerCase().includes(query.toLowerCase()) ||
-        s.name.toLowerCase().includes(query.toLowerCase())
+        s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
     );
   }
 }
