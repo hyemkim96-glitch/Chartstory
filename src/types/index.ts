@@ -1,6 +1,6 @@
 import type { Time } from "lightweight-charts";
 
-export type TimeRange = "1W" | "1M" | "3M" | "1Y" | "ALL";
+export type TimeRange = "일" | "주" | "월" | "년";
 
 export interface StockMetadata {
   symbol: string;

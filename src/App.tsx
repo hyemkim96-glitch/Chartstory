@@ -62,7 +62,7 @@ function App() {
               className="bg-surface-03 p-1 border border-default"
             >
               <TabsList className="bg-transparent border-0 gap-0.5">
-                {(["1W", "1M", "3M", "1Y", "ALL"] as TimeRange[]).map((r) => (
+                {(["일", "주", "월", "년"] as TimeRange[]).map((r) => (
                   <TabsTrigger
                     key={r}
                     value={r}
