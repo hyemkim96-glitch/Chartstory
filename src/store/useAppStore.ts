@@ -5,6 +5,7 @@ import type {
   AISummary,
   ChartSelection,
   TimeRange,
+  QuoteData,
 } from "../types";
 
 interface AppState {
@@ -15,6 +16,8 @@ interface AppState {
   summary: AISummary | null;
   isLoading: boolean;
   error: string | null;
+  quote: QuoteData | null;
+  quoteLoading: boolean;
 
   setStock: (stock: StockMetadata) => void;
   setTimeRange: (range: TimeRange) => void;
@@ -23,6 +26,8 @@ interface AppState {
   setSummary: (summary: AISummary | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setQuote: (quote: QuoteData | null) => void;
+  setQuoteLoading: (loading: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -39,6 +44,8 @@ export const useAppStore = create<AppState>((set) => ({
   summary: null,
   isLoading: false,
   error: null,
+  quote: null,
+  quoteLoading: false,
 
   setStock: (stock) => set({ currentStock: stock }),
   setTimeRange: (timeRange) => set({ timeRange }),
@@ -47,4 +54,6 @@ export const useAppStore = create<AppState>((set) => ({
   setSummary: (summary) => set({ summary }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
+  setQuote: (quote) => set({ quote }),
+  setQuoteLoading: (loading) => set({ quoteLoading: loading }),
 }));

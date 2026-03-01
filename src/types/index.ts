@@ -46,3 +46,12 @@ export interface MarketEvent {
   text: string;
   label: string;
 }
+
+export interface QuoteData {
+  price: number;
+  change: number;
+  changeRate: number;
+  marketCap?: number; // 억원 (KRW) / 사용 불가 (USD)
+  per?: number;
+  currency: string; // "KRW" | "USD"
+}

@@ -183,15 +183,62 @@ function kisDevPlugin(
 
           try {
             const url = new URL(req.url, "http://localhost");
+            const action = url.searchParams.get("action") ?? "chart";
             const rawSymbol = url.searchParams.get("symbol") ?? "";
             const period = url.searchParams.get("period") ?? "D";
             const exchange = url.searchParams.get("exchange") ?? "NASDAQ";
 
             const token = await getToken();
-            const today = daysAgo(0);
             const isKorean = /^\d{6}(\.KS|\.KQ)?$/.test(rawSymbol);
             const symbol = rawSymbol.replace(/\.(KS|KQ)$/, "");
+            const excdMap: Record<string, string> = { NASDAQ: "NAS", NYSE: "NYS", AMEX: "AMS" };
+            const excd = excdMap[exchange] ?? "NAS";
 
+            // ── Quote ───────────────────────────────────────────────────────
+            if (action === "quote") {
+              const quoteUrl = new URL(
+                isKorean
+                  ? `${KIS_BASE}/uapi/domestic-stock/v1/quotations/inquire-price`
+                  : `${KIS_BASE}/uapi/overseas-price/v1/quotations/price`
+              );
+              if (isKorean) {
+                quoteUrl.searchParams.set("FID_COND_MRKT_DIV_CODE", "J");
+                quoteUrl.searchParams.set("FID_INPUT_ISCD", symbol);
+              } else {
+                quoteUrl.searchParams.set("AUTH", "");
+                quoteUrl.searchParams.set("EXCD", excd);
+                quoteUrl.searchParams.set("SYMB", symbol);
+              }
+              const qRes = await fetch(quoteUrl.toString(), {
+                headers: kisHeaders(token, isKorean ? "FHKST01010100" : "HHDFS00000300"),
+              });
+              const qd = await qRes.json();
+              if (qd.rt_cd !== "0" || !qd.output) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: "시세 데이터 없음" }));
+                return;
+              }
+              const o = qd.output;
+              const quote = isKorean
+                ? {
+                    price: Number(o.stck_prpr),
+                    change: Number(o.prdy_vrss),
+                    changeRate: Number(o.prdy_ctrt),
+                    marketCap: Number(o.hts_avls),
+                    per: Number(o.per) || undefined,
+                    currency: "KRW",
+                  }
+                : {
+                    price: Number(o.last),
+                    change: Number(o.diff),
+                    changeRate: Number(o.rate),
+                    currency: "USD",
+                  };
+              res.end(JSON.stringify(quote));
+              return;
+            }
+
+            const today = daysAgo(0);
             let rows: Row[] = [];
 
             if (isKorean) {
@@ -230,12 +277,6 @@ function kisDevPlugin(
               rows = dedup(rows);
               if (period === "Y") rows = toYearly(rows);
             } else {
-              const excdMap: Record<string, string> = {
-                NASDAQ: "NAS",
-                NYSE: "NYS",
-                AMEX: "AMS",
-              };
-              const excd = excdMap[exchange] ?? "NAS";
               const gubnMap: Record<string, string> = {
                 D: "0",
                 W: "1",

@@ -163,6 +163,55 @@ function dedup(rows: Row[]): Row[] {
     .sort((a, b) => a.time.localeCompare(b.time));
 }
 
+// ── Korean stock quote ────────────────────────────────────────────────────────
+async function fetchKRQuote(token: string, symbol: string) {
+  const url = new URL(
+    `${KIS_BASE}/uapi/domestic-stock/v1/quotations/inquire-price`
+  );
+  url.searchParams.set("FID_COND_MRKT_DIV_CODE", "J");
+  url.searchParams.set("FID_INPUT_ISCD", symbol);
+
+  const res = await fetch(url.toString(), {
+    headers: kisHeaders(token, "FHKST01010100"),
+  });
+  const d = await res.json();
+  if (d.rt_cd !== "0" || !d.output) return null;
+  const o = d.output;
+
+  return {
+    price: Number(o.stck_prpr),
+    change: Number(o.prdy_vrss),
+    changeRate: Number(o.prdy_ctrt),
+    marketCap: Number(o.hts_avls), // 억원
+    per: Number(o.per) || undefined,
+    currency: "KRW",
+  };
+}
+
+// ── US stock quote ─────────────────────────────────────────────────────────
+async function fetchUSQuote(token: string, symbol: string, excd: string) {
+  const url = new URL(
+    `${KIS_BASE}/uapi/overseas-price/v1/quotations/price`
+  );
+  url.searchParams.set("AUTH", "");
+  url.searchParams.set("EXCD", excd);
+  url.searchParams.set("SYMB", symbol);
+
+  const res = await fetch(url.toString(), {
+    headers: kisHeaders(token, "HHDFS00000300"),
+  });
+  const d = await res.json();
+  if (d.rt_cd !== "0" || !d.output) return null;
+  const o = d.output;
+
+  return {
+    price: Number(o.last),
+    change: Number(o.diff),
+    changeRate: Number(o.rate),
+    currency: "USD",
+  };
+}
+
 // ── Main handler ─────────────────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -174,16 +223,29 @@ export default async function handler(req: any, res: any) {
 
   try {
     const url = new URL(req.url, "http://localhost");
+    const action = url.searchParams.get("action") ?? "chart";
     const rawSymbol = url.searchParams.get("symbol") ?? "";
     const period = url.searchParams.get("period") ?? "D"; // D W M Y
     const exchange = url.searchParams.get("exchange") ?? "NASDAQ";
 
     const token = await getToken();
-    const today = daysAgo(0);
 
     // Strip .KS / .KQ suffix for Korean stocks
     const isKorean = /^\d{6}(\.KS|\.KQ)?$/.test(rawSymbol);
     const symbol = rawSymbol.replace(/\.(KS|KQ)$/, "");
+    const excdMap: Record<string, string> = { NASDAQ: "NAS", NYSE: "NYS", AMEX: "AMS" };
+    const excd = excdMap[exchange] ?? "NAS";
+
+    // ── Quote ───────────────────────────────────────────────────────────────
+    if (action === "quote") {
+      const quote = isKorean
+        ? await fetchKRQuote(token, symbol)
+        : await fetchUSQuote(token, symbol, excd);
+      if (!quote) return res.status(404).json({ error: "시세 데이터 없음" });
+      return res.status(200).json(quote);
+    }
+
+    const today = daysAgo(0);
 
     let rows: Row[] = [];
 
@@ -229,12 +291,6 @@ export default async function handler(req: any, res: any) {
       if (period === "Y") rows = toYearly(rows);
     } else {
       // ── US stock ──────────────────────────────────────────────────────────
-      const excdMap: Record<string, string> = {
-        NASDAQ: "NAS",
-        NYSE: "NYS",
-        AMEX: "AMS",
-      };
-      const excd = excdMap[exchange] ?? "NAS";
       const gubnMap: Record<string, string> = { D: "0", W: "1", M: "2", Y: "2" };
       const gubn = gubnMap[period] ?? "0";
 

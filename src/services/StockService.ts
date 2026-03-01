@@ -3,6 +3,7 @@ import type {
   TimeRange,
   MarketEvent,
   StockMetadata,
+  QuoteData,
 } from "../types";
 import type { Time } from "lightweight-charts";
 
@@ -171,6 +172,28 @@ export class StockService {
     } catch (err) {
       console.warn("KIS API 실패, 목업 데이터 사용:", err);
       return getMockData(symbol, range);
+    }
+  }
+
+  static async getQuote(
+    symbol: string,
+    stock?: StockMetadata
+  ): Promise<QuoteData | null> {
+    const exchange = stock?.exchange ?? "NASDAQ";
+    const params = new URLSearchParams({ action: "quote", symbol, exchange });
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`/api/kis?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`KIS quote ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn("KIS Quote 실패:", err);
+      return null;
     }
   }
 

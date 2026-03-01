@@ -1,11 +1,77 @@
+import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Chart from "./components/Chart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
+import { StockService } from "@/services/StockService";
 import type { TimeRange } from "@/types";
+import { cn } from "@/lib/utils";
 
+// ── Formatting helpers ───────────────────────────────────────────────────────
+function fmtPrice(price: number, currency: string): string {
+  if (currency === "KRW") return price.toLocaleString("ko-KR") + "원";
+  return "$" + price.toFixed(2);
+}
+
+function fmtChange(change: number, currency: string): string {
+  const abs = Math.abs(change);
+  const sign = change >= 0 ? "+" : "-";
+  if (currency === "KRW") return sign + abs.toLocaleString("ko-KR") + "원";
+  return sign + "$" + abs.toFixed(2);
+}
+
+function fmtChangeRate(rate: number): string {
+  return (rate >= 0 ? "+" : "") + rate.toFixed(2) + "%";
+}
+
+function fmtMarketCap(cap: number | undefined, currency: string): string {
+  if (!cap || cap <= 0) return "—";
+  if (currency === "KRW") {
+    if (cap >= 10000) return (cap / 10000).toFixed(0) + "조";
+    return cap.toLocaleString("ko-KR") + "억";
+  }
+  return "—";
+}
+
+function fmtPer(per: number | undefined): string {
+  if (!per || per <= 0) return "—";
+  return per.toFixed(2) + "배";
+}
+
+// ── App ──────────────────────────────────────────────────────────────────────
 function App() {
-  const { currentStock, timeRange, setTimeRange } = useAppStore();
+  const {
+    currentStock,
+    timeRange,
+    setTimeRange,
+    quote,
+    quoteLoading,
+    setQuote,
+    setQuoteLoading,
+  } = useAppStore();
+
+  // Fetch quote whenever the selected stock changes
+  useEffect(() => {
+    if (!currentStock) return;
+    let cancelled = false;
+
+    setQuoteLoading(true);
+    setQuote(null);
+
+    StockService.getQuote(currentStock.symbol, currentStock).then((q) => {
+      if (!cancelled) {
+        setQuote(q);
+        setQuoteLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStock, setQuote, setQuoteLoading]);
+
+  const isUp = (quote?.change ?? 0) >= 0;
+  const currency = quote?.currency ?? currentStock?.currency ?? "USD";
 
   return (
     <Layout>
@@ -27,18 +93,37 @@ function App() {
                 현재가
               </span>
               <div className="text-[2rem] font-bold text-primary tabular-nums leading-none">
-                $187.24
+                {quoteLoading
+                  ? "—"
+                  : quote
+                    ? fmtPrice(quote.price, currency)
+                    : "—"}
               </div>
             </div>
             <div className="flex flex-col gap-1 text-right">
               <span className="text-xs font-medium text-secondary uppercase tracking-wider">
                 등락률
               </span>
-              <div className="text-lg font-bold text-up tabular-nums leading-none">
-                +1.42%{" "}
-                <span className="text-sm font-normal text-secondary">
-                  +$2.63
-                </span>
+              <div
+                className={cn(
+                  "text-lg font-bold tabular-nums leading-none",
+                  quoteLoading || !quote
+                    ? "text-secondary"
+                    : isUp
+                      ? "text-up"
+                      : "text-down"
+                )}
+              >
+                {quoteLoading || !quote ? (
+                  "—"
+                ) : (
+                  <>
+                    {fmtChangeRate(quote.changeRate)}{" "}
+                    <span className="text-sm font-normal text-secondary">
+                      {fmtChange(quote.change, currency)}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -87,7 +172,7 @@ function App() {
               시가총액
             </p>
             <div className="text-xl font-semibold text-primary tabular-nums">
-              $2.94T
+              {quoteLoading ? "—" : fmtMarketCap(quote?.marketCap, currency)}
             </div>
           </div>
           <div className="p-5 border-r border-default">
@@ -95,7 +180,7 @@ function App() {
               PER
             </p>
             <div className="text-xl font-semibold text-primary tabular-nums">
-              28.42
+              {quoteLoading ? "—" : fmtPer(quote?.per)}
             </div>
           </div>
           <div className="p-5">
@@ -103,7 +188,7 @@ function App() {
               배당수익률
             </p>
             <div className="text-xl font-semibold text-primary tabular-nums">
-              0.52%
+              —
             </div>
           </div>
         </div>
