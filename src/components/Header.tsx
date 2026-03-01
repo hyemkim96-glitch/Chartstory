@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Info, Loader2, Sparkles } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/useAppStore";
 import { StockService } from "@/services/StockService";
 import type { StockMetadata } from "@/types";
@@ -53,49 +52,49 @@ export default function Header() {
   };
 
   return (
-    <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-xl sticky top-0 z-50">
-      <div className="flex items-center gap-3 group cursor-pointer">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-          <Sparkles className="w-6 h-6 text-white" />
-        </div>
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-            Chartstory
-          </h1>
-          <span className="text-[10px] text-blue-400 font-bold tracking-widest uppercase opacity-70">
-            AI Stock Analysis
+    <header className="h-14 border-b border-default flex items-center justify-between px-6 bg-surface-02 sticky top-0 z-50">
+      {/* 로고 */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <div className="w-5 h-5 bg-[#1A6EFF] flex items-center justify-center">
+          <span className="text-white text-[10px] font-bold leading-none">
+            C
           </span>
         </div>
+        <span className="text-sm font-semibold text-primary">Chartstory</span>
+        <span className="text-xs text-placeholder">AI 주식 분석</span>
       </div>
 
-      <div className="flex-1 max-w-xl mx-8 relative" ref={searchRef}>
-        <div className="relative group">
+      {/* 검색 */}
+      <div className="flex-1 max-w-md mx-8 relative" ref={searchRef}>
+        <div className="relative">
           {isSearching ? (
-            <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 animate-spin" />
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary animate-spin" />
           ) : (
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
           )}
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search symbol or company name..."
-            className="pl-12 h-12 bg-white/5 border-white/10 rounded-2xl focus:bg-white/10 focus:border-blue-500/50 transition-all duration-300 placeholder:text-slate-600"
+            placeholder="종목명 또는 심볼 검색..."
+            className="pl-9 h-9 bg-surface-03 border-default rounded-none text-sm text-primary placeholder:text-placeholder focus-visible:border-[#1A6EFF] focus-visible:ring-0 transition-colors"
           />
         </div>
 
         {results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-3 glass-dark rounded-2xl shadow-2xl overflow-hidden z-50 border border-white/10 animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute top-full left-0 right-0 mt-0 bg-surface-03 border border-default z-50">
             {results.map((stock) => (
               <button
                 key={stock.symbol}
                 onClick={() => handleSelect(stock)}
-                className="w-full px-5 py-4 flex items-center justify-between hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 text-left"
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-02 transition-colors border-b border-subtle last:border-0 text-left"
               >
                 <div>
-                  <div className="font-bold text-slate-100">{stock.symbol}</div>
-                  <div className="text-xs text-slate-500">{stock.name}</div>
+                  <div className="text-sm font-semibold text-primary">
+                    {stock.symbol}
+                  </div>
+                  <div className="text-xs text-secondary">{stock.name}</div>
                 </div>
-                <div className="text-[10px] bg-blue-500/10 text-blue-400 font-bold px-2 py-1 rounded-md uppercase border border-blue-500/20">
+                <div className="text-[11px] text-secondary font-medium px-2 py-0.5 border border-default">
                   {stock.exchange}
                 </div>
               </button>
@@ -104,17 +103,9 @@ export default function Header() {
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-400 hover:text-white hover:bg-white/5 rounded-full transition-all"
-        >
-          <Info className="w-5 h-5" />
-        </Button>
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center text-xs font-bold shadow-inner cursor-pointer hover:border-blue-500/50 transition-all">
-          JD
-        </div>
+      {/* 유저 아바타 */}
+      <div className="w-8 h-8 border border-default flex items-center justify-center text-xs font-semibold text-secondary cursor-pointer hover:border-[#1A6EFF] hover:text-primary transition-colors shrink-0">
+        JD
       </div>
     </header>
   );

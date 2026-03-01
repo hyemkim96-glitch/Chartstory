@@ -1,3 +1,4 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
@@ -5,39 +6,39 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-border: var(--border-default);
+  --color-input: var(--border-default);
+  --color-ring: var(--color-brand-blue);
+  --color-background: var(--surface-01);
+  --color-foreground: var(--text-primary);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--color-brand-blue);
+  --color-primary-foreground: #ffffff;
 
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--surface-03);
+  --color-secondary-foreground: var(--text-primary);
 
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--color-semantic-down);
+  --color-destructive-foreground: #ffffff;
 
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--surface-03);
+  --color-muted-foreground: var(--text-secondary);
 
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--surface-03);
+  --color-accent-foreground: var(--text-primary);
 
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--surface-03);
+  --color-popover-foreground: var(--text-primary);
 
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--surface-02);
+  --color-card-foreground: var(--text-primary);
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius-lg-token);
+  --radius-md: var(--radius-md-token);
+  --radius-sm: var(--radius-sm-token);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -46,7 +47,6 @@
     from {
       height: 0;
     }
-
     to {
       height: var(--radix-accordion-content-height);
     }
@@ -56,78 +56,149 @@
     from {
       height: var(--radix-accordion-content-height);
     }
-
     to {
       height: 0;
     }
   }
 }
 
-@layer base {
-  :root {
-    --background: hsl(222, 47%, 4%);
-    --foreground: hsl(210, 40%, 98%);
-    --card: hsl(222, 47%, 6%);
-    --card-foreground: hsl(210, 40%, 98%);
-    --popover: hsl(222, 47%, 4%);
-    --popover-foreground: hsl(210, 40%, 98%);
-    --primary: hsl(217, 91%, 60%);
-    --primary-foreground: hsl(222, 47%, 1.2%);
-    --secondary: hsl(217, 32%, 17%);
-    --secondary-foreground: hsl(210, 40%, 98%);
-    --muted: hsl(217, 32%, 17%);
-    --muted-foreground: hsl(215, 20%, 65%);
-    --accent: hsl(217, 32%, 17%);
-    --accent-foreground: hsl(210, 40%, 98%);
-    --destructive: hsl(0, 62%, 30%);
-    --destructive-foreground: hsl(210, 40%, 98%);
-    --border: hsl(217, 32%, 17%);
-    --input: hsl(217, 32%, 17%);
-    --ring: hsl(224, 76%, 48%);
-    --radius: 0.75rem;
-  }
+/* ─── Design System Tokens ─── */
+:root {
+  /* Gray Scale */
+  --color-gray-900: #0f0f0f;
+  --color-gray-800: #1a1a1a;
+  --color-gray-700: #2e2e2e;
+  --color-gray-600: #4a4a4a;
+  --color-gray-500: #6b6b6b;
+  --color-gray-400: #8c8c8c;
+  --color-gray-300: #b0b0b0;
+  --color-gray-200: #cccccc;
+  --color-gray-100: #e5e5e5;
+  --color-gray-50: #f5f5f5;
+  --color-white: #ffffff;
+
+  /* Brand */
+  --color-brand-blue: #1a6eff;
+  --color-brand-blue-light: #ebf2ff;
+
+  /* Semantic */
+  --color-semantic-up: #16a34a;
+  --color-semantic-down: #dc2626;
+  --color-semantic-neutral: #6b6b6b;
+  --color-semantic-warning: #d97706;
+  --color-semantic-error: #dc2626;
+
+  /* Dark Surface Layers */
+  --surface-base: #0a0a0a;
+  --surface-01: #111111;
+  --surface-02: #1a1a1a;
+  --surface-03: #242424;
+
+  /* Dark Border */
+  --border-default: #2e2e2e;
+  --border-subtle: #1f1f1f;
+
+  /* Dark Text */
+  --text-primary: #e5e5e5;
+  --text-secondary: #8c8c8c;
+  --text-placeholder: #6b6b6b;
+  --text-disabled: #4a4a4a;
+
+  /* Radius tokens */
+  --radius-none: 0px;
+  --radius-sm-token: 2px;
+  --radius-md-token: 4px;
+  --radius-lg-token: 6px;
+  --radius-full-token: 9999px;
+
+  /* shadcn compat */
+  --radius: 4px;
 }
 
+/* ─── Base Styles ─── */
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--surface-01);
+    color: var(--text-primary);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Tabular numbers for all numeric contexts */
+  .tabular-nums,
+  [data-numeric],
+  td,
+  .price,
+  .change {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Custom Utilities */
+/* ─── Custom Utilities ─── */
 @layer utilities {
+  /* Surface backgrounds */
+  .bg-surface-base {
+    background-color: var(--surface-base);
+  }
+  .bg-surface-01 {
+    background-color: var(--surface-01);
+  }
+  .bg-surface-02 {
+    background-color: var(--surface-02);
+  }
+  .bg-surface-03 {
+    background-color: var(--surface-03);
+  }
+
+  /* Border utilities */
+  .border-default {
+    border-color: var(--border-default);
+  }
+  .border-subtle {
+    border-color: var(--border-subtle);
+  }
+
+  /* Text utilities */
+  .text-primary {
+    color: var(--text-primary);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  .text-placeholder {
+    color: var(--text-placeholder);
+  }
+
+  /* Semantic colors */
+  .text-up {
+    color: var(--color-semantic-up);
+  }
+  .text-down {
+    color: var(--color-semantic-down);
+  }
+  .text-brand {
+    color: var(--color-brand-blue);
+  }
+
+  /* Brand left border accent (AI panel) */
+  .border-l-brand {
+    border-left: 2px solid var(--color-brand-blue);
+  }
+
+  /* Legacy glass — kept for gradual removal */
   .glass {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 shadow-xl;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-default);
   }
-
   .glass-dark {
-    @apply bg-black/40 backdrop-blur-xl border border-white/5 shadow-2xl;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-indigo-600;
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0% {
-      transform: translateY(0px);
-    }
-
-    50% {
-      transform: translateY(-10px);
-    }
-
-    100% {
-      transform: translateY(0px);
-    }
+    background: var(--surface-02);
+    border: 1px solid var(--border-default);
   }
 }

@@ -1,6 +1,20 @@
 import type { OHLCVData, TimeRange, MarketEvent } from "../types";
 import type { Time } from "lightweight-charts";
 
+// Deterministic pseudo-random generator seeded by symbol
+function seededRand(seed: string): () => number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(31, h) + seed.charCodeAt(i);
+    h |= 0;
+  }
+  return () => {
+    h = Math.imul(2654435761, h ^ (h >>> 16));
+    h |= 0;
+    return (h >>> 0) / 0xffffffff;
+  };
+}
+
 export class StockService {
   /**
    * Fetches OHLCV data for a given symbol and time range.
@@ -31,11 +45,13 @@ export class StockService {
         days = 365;
         break;
       case "ALL":
-        days = 1000;
+        days = 3650; // ~10 years
         break;
     }
 
-    let lastClose = 180 + Math.random() * 20;
+    // Seed random with symbol so prices are stable across re-renders
+    const rand = seededRand(symbol);
+    let lastClose = 100 + rand() * 200;
 
     for (let i = days; i >= 0; i--) {
       const date = new Date(now);
@@ -43,10 +59,10 @@ export class StockService {
       if (date.getDay() === 0 || date.getDay() === 6) continue;
 
       const time = date.toISOString().split("T")[0];
-      const open = lastClose + (Math.random() - 0.5) * 5;
-      const high = Math.max(open, open + Math.random() * 5);
-      const low = Math.min(open, open - Math.random() * 5);
-      const close = low + Math.random() * (high - low);
+      const open = lastClose + (rand() - 0.5) * 5;
+      const high = Math.max(open, open + rand() * 5);
+      const low = Math.min(open, open - rand() * 5);
+      const close = low + rand() * (high - low);
 
       data.push({
         time: time as Time,
@@ -54,7 +70,7 @@ export class StockService {
         high: Number(high.toFixed(2)),
         low: Number(low.toFixed(2)),
         close: Number(close.toFixed(2)),
-        value: Math.floor(Math.random() * 1000000),
+        value: Math.floor(rand() * 1000000),
       });
       lastClose = close;
     }

@@ -20,6 +20,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@roiui": "https://roiui.com/r/{name}.json"
+    "@roiui": "https://roiui.com/r/{name}.json",
+    "@aliimam": "https://aliimam.in/r/{name}.json"
   }
 }

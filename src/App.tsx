@@ -3,81 +3,70 @@ import Chart from "./components/Chart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
 import type { TimeRange } from "@/types";
-import { TrendingUp, Globe, Clock } from "lucide-react";
 
 function App() {
   const { currentStock, timeRange, setTimeRange } = useAppStore();
 
   return (
     <Layout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        {/* Market Banner */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <h2 className="text-4xl font-black tracking-tight text-white">
-                {currentStock?.symbol}
-              </h2>
-              <div className="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest">
-                Real-time
-              </div>
-            </div>
-            <div className="flex items-center gap-4 text-slate-400">
-              <div className="flex items-center gap-1.5 font-medium text-sm">
-                <Globe className="w-4 h-4 text-slate-600" />
-                {currentStock?.name} · {currentStock?.exchange}
-              </div>
-              <div className="w-1 h-1 rounded-full bg-slate-700" />
-              <div className="flex items-center gap-1.5 font-medium text-sm">
-                <Clock className="w-4 h-4 text-slate-600" />
-                Market Open
-              </div>
-            </div>
+      <div className="space-y-6">
+        {/* 종목 헤더 */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-default">
+          <div className="space-y-1">
+            <h2 className="text-[2.5rem] font-bold tracking-tight text-primary leading-none tabular-nums">
+              {currentStock?.symbol}
+            </h2>
+            <p className="text-sm text-secondary">
+              {currentStock?.name} &middot; {currentStock?.exchange}
+            </p>
           </div>
 
-          <div className="flex flex-row items-end gap-8 bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl transition-all hover:bg-white/10 group">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Last Price
+          <div className="flex flex-row items-end gap-8 bg-surface-02 border border-default p-5">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-secondary uppercase tracking-wider">
+                현재가
               </span>
-              <div className="text-3xl font-black text-white">$187.24</div>
+              <div className="text-[2rem] font-bold text-primary tabular-nums leading-none">
+                $187.24
+              </div>
             </div>
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                Today's Range
+            <div className="flex flex-col gap-1 text-right">
+              <span className="text-xs font-medium text-secondary uppercase tracking-wider">
+                등락률
               </span>
-              <div className="flex items-center gap-2 text-emerald-400 font-bold text-lg">
-                <TrendingUp className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              <div className="text-lg font-bold text-up tabular-nums leading-none">
                 +1.42%{" "}
-                <span className="text-emerald-500/50 text-sm">+$2.63</span>
+                <span className="text-sm font-normal text-secondary">
+                  +$2.63
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Chart Section */}
-        <div className="relative glass-dark rounded-[2.5rem] border border-white/5 p-8 shadow-2xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <div className="flex flex-col">
-              <h3 className="text-lg font-bold text-white">
-                Price Performance
+        {/* 차트 섹션 */}
+        <div className="bg-surface-02 border border-default">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 pt-5 pb-4 border-b border-default">
+            <div>
+              <h3 className="text-base font-semibold text-primary">
+                가격 차트
               </h3>
-              <p className="text-xs text-slate-500">
-                Historical data analysis & events toggle
+              <p className="text-xs text-secondary mt-0.5">
+                과거 데이터 분석 — 날짜를 클릭하면 AI 분석이 생성됩니다
               </p>
             </div>
 
             <Tabs
               value={timeRange}
               onValueChange={(val) => setTimeRange(val as TimeRange)}
-              className="bg-black/20 p-1.5 rounded-2xl border border-white/5"
+              className="bg-surface-03 p-1 border border-default"
             >
-              <TabsList className="bg-transparent border-0 gap-1">
-                {["1W", "1M", "3M", "1Y", "ALL"].map((r) => (
+              <TabsList className="bg-transparent border-0 gap-0.5">
+                {(["1W", "1M", "3M", "1Y", "ALL"] as TimeRange[]).map((r) => (
                   <TabsTrigger
                     key={r}
                     value={r}
-                    className="rounded-xl px-5 text-xs font-bold data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-300"
+                    className="text-xs font-medium px-4 data-[state=active]:bg-[#1A6EFF] data-[state=active]:text-white transition-colors"
                   >
                     {r}
                   </TabsTrigger>
@@ -86,30 +75,36 @@ function App() {
             </Tabs>
           </div>
 
-          <div className="h-[520px] rounded-3xl overflow-hidden bg-black/40 border border-white/5 shadow-inner p-4">
+          <div className="h-[480px] p-4">
             <Chart />
           </div>
         </div>
 
-        {/* Quick Insights Tiles */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-3xl bg-blue-600/5 border border-blue-500/10 hover:bg-blue-600/10 transition-colors">
-            <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-3">
-              Market Cap
-            </h4>
-            <div className="text-xl font-bold text-slate-100">$2.94T</div>
+        {/* 주요 지표 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 border border-default">
+          <div className="p-5 border-r border-default">
+            <p className="text-xs font-medium text-secondary uppercase tracking-wider mb-2">
+              시가총액
+            </p>
+            <div className="text-xl font-semibold text-primary tabular-nums">
+              $2.94T
+            </div>
           </div>
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">
-              PE Ratio
-            </h4>
-            <div className="text-xl font-bold text-slate-100">28.42</div>
+          <div className="p-5 border-r border-default">
+            <p className="text-xs font-medium text-secondary uppercase tracking-wider mb-2">
+              PER
+            </p>
+            <div className="text-xl font-semibold text-primary tabular-nums">
+              28.42
+            </div>
           </div>
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">
-              Dividend
-            </h4>
-            <div className="text-xl font-bold text-slate-100">0.52%</div>
+          <div className="p-5">
+            <p className="text-xs font-medium text-secondary uppercase tracking-wider mb-2">
+              배당수익률
+            </p>
+            <div className="text-xl font-semibold text-primary tabular-nums">
+              0.52%
+            </div>
           </div>
         </div>
       </div>
