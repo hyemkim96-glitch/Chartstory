@@ -202,87 +202,123 @@ export class StockService {
     date: string;
     label: string;
     text: string;
+    wikiUrl: string;
   }[] = [
     {
       date: "2001-09-11",
       label: "9/11",
       text: "미국 9.11 테러 — 전 세계 증시 급락",
+      wikiUrl: "https://ko.wikipedia.org/wiki/9%C2%B711_%ED%85%8C%EB%9F%AC",
     },
-    { date: "2003-03-20", label: "이라크", text: "이라크 전쟁 개전" },
+    {
+      date: "2003-03-20",
+      label: "이라크",
+      text: "이라크 전쟁 개전",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EC%9D%B4%EB%9D%BC%ED%81%AC_%EC%A0%84%EC%9F%81",
+    },
     {
       date: "2008-09-15",
       label: "리먼",
       text: "리먼브라더스 파산 — 글로벌 금융위기",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EB%A6%AC%EB%A8%BC_%EB%B8%8C%EB%9D%BC%EB%8D%94%EC%8A%A4",
     },
     {
       date: "2010-05-06",
       label: "플래시",
       text: "플래시 크래시 — 순간 9.2% 폭락",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/2010%EB%85%84_%ED%94%8C%EB%9E%98%EC%8B%9C_%ED%81%AC%EB%9E%98%EC%8B%9C",
     },
     {
       date: "2011-08-05",
       label: "신용강등",
       text: "S&P, 미국 국가신용등급 AA+로 강등",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/2011%EB%85%84_%EB%AF%B8%EA%B5%AD_%EB%B6%80%EC%B1%84_%ED%95%9C%EB%8F%84_%EC%9C%84%EA%B8%B0",
     },
     {
       date: "2015-08-24",
       label: "차이나쇼크",
       text: "중국 증시 폭락 — 블랙먼데이",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/2015%EB%85%84_%EC%A4%91%EA%B5%AD_%EC%A3%BC%EA%B0%80_%EB%B6%95%EA%B4%B4",
     },
     {
       date: "2016-06-24",
       label: "브렉시트",
       text: "영국 EU 탈퇴 결정 — 파운드화 급락",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EB%B8%8C%EB%A0%89%EC%8B%9C%ED%8A%B8",
     },
     {
       date: "2018-12-24",
       label: "크리스마스폭락",
       text: "크리스마스 이브 폭락 — 연준 긴축 우려",
+      wikiUrl: "https://en.wikipedia.org/wiki/2018_stock_market_decline",
     },
     {
       date: "2020-01-27",
       label: "코로나공포",
       text: "COVID-19 팬데믹 공포 확산 — 급락 시작",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/COVID-19_%ED%8C%AC%EB%8D%B0%EB%AF%B9",
     },
     {
       date: "2020-03-16",
       label: "코로나저점",
       text: "코로나19 최악 — 서킷브레이커 발동",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/COVID-19_%ED%8C%AC%EB%8D%B0%EB%AF%B9",
     },
     {
       date: "2020-11-09",
       label: "백신",
       text: "화이자 백신 90% 효과 발표 — 강한 반등",
+      wikiUrl: "https://ko.wikipedia.org/wiki/COVID-19_%EB%B0%B1%EC%8B%A0",
     },
     {
       date: "2022-02-24",
       label: "우크라이나",
       text: "러시아, 우크라이나 침공 개시",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EB%9F%AC%EC%8B%9C%EC%95%84%EC%9D%98_%EC%9A%B0%ED%81%AC%EB%9D%BC%EC%9D%B4%EB%82%98_%EC%B9%A8%EA%B3%B5",
     },
     {
       date: "2022-06-15",
       label: "75bp인상",
       text: "연준, 28년만에 75bp 금리인상 단행",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD_%EC%97%B0%EB%B0%A9%EC%A4%80%EB%B9%84%EC%A0%9C%EB%8F%84",
     },
     {
       date: "2022-10-13",
       label: "CPI쇼크",
       text: "미국 CPI 8.2% — 인플레이션 쇼크",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EC%9D%B8%ED%94%8C%EB%A0%88%EC%9D%B4%EC%85%98",
     },
     {
       date: "2023-03-10",
       label: "SVB파산",
       text: "실리콘밸리은행(SVB) 파산 — 금융 불안",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EC%8B%A4%EB%A6%AC%EC%BD%98%EB%B0%B8%EB%A6%AC%EC%9D%80%ED%96%89",
     },
     {
       date: "2023-11-01",
       label: "피벗기대",
       text: "연준 금리동결 — 피벗 기대감 급등",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EB%AF%B8%EA%B5%AD_%EC%97%B0%EB%B0%A9%EC%A4%80%EB%B9%84%EC%A0%9C%EB%8F%84",
     },
     {
       date: "2024-08-05",
       label: "엔캐리청산",
       text: "일본 금리인상 — 엔 캐리 트레이드 청산 폭락",
+      wikiUrl:
+        "https://ko.wikipedia.org/wiki/%EC%BA%90%EB%A6%AC_%ED%8A%B8%EB%A0%88%EC%9D%B4%EB%93%9C",
     },
   ];
 
@@ -335,6 +371,7 @@ export class StockService {
         text: ev.text,
         color: "#f97316", // 주황색 — 세계 사건
         eventType: "world",
+        wikiUrl: ev.wikiUrl,
       });
     }
 

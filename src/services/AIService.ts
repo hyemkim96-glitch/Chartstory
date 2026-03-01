@@ -99,7 +99,7 @@ export class AIService {
       const prompt = `당신은 한국어로 응답하는 전문 금융 애널리스트입니다.
 ${dateLabel} ${symbol} 주가의 ${periodStr} 흐름과 변동 원인을 아래 뉴스를 바탕으로 분석해 주세요.
 ${priceContext}
-주가는 단순히 해당 종목 뉴스만이 아니라 금리 결정, 정치 이벤트, 지정학적 리스크, 환율, 섹터 이슈, 글로벌 시장 동향 등 다양한 요인에 의해 움직입니다. 아래 두 카테고리의 뉴스를 모두 고려하여 가장 설득력 있는 원인을 분석하세요.
+주가는 종목 뉴스 외에도 금리, 정치 이벤트, 지정학적 리스크, 환율, 섹터 이슈, 글로벌 동향 등 다양한 요인에 의해 움직입니다. 두 카테고리 뉴스를 모두 고려하여 원인을 분석하세요.
 
 ${companySection}
 
@@ -107,10 +107,16 @@ ${macroSection}
 
 반드시 아래 JSON 형식으로만 응답하세요 (마크다운 코드블록 없이):
 {
-  "headline": "한 문장의 핵심 헤드라인 — ${periodStr} 주가 흐름의 핵심 원인 (한국어)",
-  "summary": "3~4문장 분석. 종목 자체 요인과 거시/외부 요인을 구분하여 설명. 어떤 요인이 더 지배적이었는지 판단 포함 (한국어)",
+  "headline": "20자 이내의 핵심 한 줄 헤드라인 (한국어, 주가 흐름의 핵심 원인)",
+  "summary": "2문장 이내의 간결한 종합 분석. 무엇이 왜 일어났는지 핵심만 (한국어)",
+  "keyFactors": [
+    "기업요인: 실적/경영/제품 등 종목 자체 원인 (없으면 생략)",
+    "거시요인: 금리/환율/경기 등 경제적 원인 (없으면 생략)",
+    "정치/외부: 정치·지정학·규제 등 외부 원인 (없으면 생략)"
+  ],
   "sentiment": "positive 또는 negative 또는 neutral"
-}`;
+}
+keyFactors는 실제로 해당하는 항목만 2~4개 포함하세요. 각 항목은 30자 이내로 간결하게.`;
 
       const response = await fetch(this.API_URL, {
         method: "POST",
@@ -145,6 +151,9 @@ ${macroSection}
       return {
         headline: result.headline || `${symbol} 시장 업데이트`,
         content: result.summary || "요약 생성에 실패했습니다.",
+        keyFactors: Array.isArray(result.keyFactors)
+          ? result.keyFactors
+          : undefined,
         sentiment: result.sentiment || "neutral",
         date: date,
         sourceLinks: news.map((n) => ({ title: n.title, url: n.url })),

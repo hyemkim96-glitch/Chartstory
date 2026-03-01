@@ -26,6 +26,7 @@ export default function Chart() {
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const chartDataRef = useRef<OHLCVData[]>([]); // 클릭 시 캔들 조회용
+  const eventsRef = useRef<import("@/types").MarketEvent[]>([]); // 세계 사건 위키 링크용
   const {
     currentStock,
     timeRange,
@@ -116,6 +117,7 @@ export default function Chart() {
             stockData
           );
           if (!isCancelled && seriesRef.current) {
+            eventsRef.current = events; // 클릭 시 위키 링크 조회용
             markersPluginRef.current?.detach();
             markersPluginRef.current = createSeriesMarkers(
               seriesRef.current,
@@ -158,6 +160,14 @@ export default function Chart() {
           // BusinessDay object { year: number, month: number, day: number }
           const bd = param.time as BusinessDay;
           dateStr = `${bd.year}-${String(bd.month).padStart(2, "0")}-${String(bd.day).padStart(2, "0")}`;
+        }
+
+        // 세계 사건 마커 클릭 → 위키로 이동 후 AI 분석도 진행
+        const worldEvent = eventsRef.current.find(
+          (ev) => ev.eventType === "world" && String(ev.time) === dateStr
+        );
+        if (worldEvent?.wikiUrl) {
+          window.open(worldEvent.wikiUrl, "_blank", "noopener,noreferrer");
         }
 
         setSelection({

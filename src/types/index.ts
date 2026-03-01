@@ -31,6 +31,7 @@ export interface NewsItem {
 export interface AISummary {
   headline: string;
   content: string;
+  keyFactors?: string[]; // 주요 원인 불릿 포인트 (2~4개)
   sentiment: "positive" | "negative" | "neutral";
   date: string;
   sourceLinks: { title: string; url: string }[];
@@ -48,6 +49,7 @@ export interface MarketEvent {
   label: string;
   color?: string; // 마커 색상 (기본: 보라, 세계 사건: 빨강/주황)
   eventType?: "world" | "volatility"; // 이벤트 타입
+  wikiUrl?: string; // 세계 사건 위키피디아 링크 (클릭 시 이동)
 }
 
 export interface QuoteData {
