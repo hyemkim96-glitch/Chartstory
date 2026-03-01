@@ -17,13 +17,15 @@ import type {
 import { useAppStore } from "@/store/useAppStore";
 import { StockService } from "@/services/StockService";
 import { NewsService } from "@/services/NewsService";
-import { AIService } from "@/services/AIService";
+import { AIService, type CandleInfo } from "@/services/AIService";
+import type { OHLCVData } from "@/types";
 
 export default function Chart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const chartDataRef = useRef<OHLCVData[]>([]); // 클릭 시 캔들 조회용
   const {
     currentStock,
     timeRange,
@@ -104,9 +106,11 @@ export default function Chart() {
           currentStock
         );
         if (!isCancelled && seriesRef.current) {
+          chartDataRef.current = stockData; // 클릭 시 캔들 조회용 저장
           seriesRef.current.setData(stockData as CandlestickData<Time>[]);
+          chartRef.current?.timeScale().fitContent(); // 전체 데이터 범위로 자동 맞춤
 
-          // Fetch and set markers
+          // 세계 사건 + 변동성 마커
           const events = await StockService.getEvents(
             currentStock.symbol,
             stockData
@@ -117,9 +121,9 @@ export default function Chart() {
               seriesRef.current,
               events.map((ev) => ({
                 time: ev.time,
-                position: "aboveBar",
-                color: "#6366f1",
-                shape: "circle",
+                position: "aboveBar" as const,
+                color: ev.color ?? "#6366f1",
+                shape: "circle" as const,
                 text: ev.label,
               }))
             );
@@ -162,6 +166,20 @@ export default function Chart() {
           selectedDate: param.time,
         });
 
+        // 클릭한 캔들 찾기 → AI에 가격 컨텍스트 전달
+        const candle = chartDataRef.current.find(
+          (d) => String(d.time) === dateStr
+        );
+        const candleInfo: CandleInfo | undefined = candle
+          ? {
+              open: candle.open,
+              high: candle.high,
+              low: candle.low,
+              close: candle.close,
+              changeRate: ((candle.close - candle.open) / candle.open) * 100,
+            }
+          : undefined;
+
         // Trigger AI Summary
         setLoading(true);
         setError(null);
@@ -170,7 +188,8 @@ export default function Chart() {
           const summary = await AIService.summarizeNews(
             currentStock.symbol,
             dateStr,
-            news
+            news,
+            candleInfo
           );
           setSummary(summary);
         } catch (err) {

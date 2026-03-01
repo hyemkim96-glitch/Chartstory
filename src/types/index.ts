@@ -25,6 +25,7 @@ export interface NewsItem {
   url: string;
   source: string;
   publishedAt: string;
+  category?: "company" | "macro"; // 종목 직접 관련 vs 거시/정치/글로벌
 }
 
 export interface AISummary {
@@ -45,6 +46,8 @@ export interface MarketEvent {
   time: Time;
   text: string;
   label: string;
+  color?: string; // 마커 색상 (기본: 보라, 세계 사건: 빨강/주황)
+  eventType?: "world" | "volatility"; // 이벤트 타입
 }
 
 export interface QuoteData {

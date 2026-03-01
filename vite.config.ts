@@ -271,11 +271,19 @@ function kisDevPlugin(
               const chunks: [string, string][] =
                 period === "D"
                   ? [
-                    [daysAgo(730), daysAgo(580)],
-                    [daysAgo(579), daysAgo(420)],
-                    [daysAgo(419), daysAgo(260)],
-                    [daysAgo(259), daysAgo(100)],
-                    [daysAgo(99), today],
+                    // 5년치 일봉 (병렬 요청)
+                    [daysAgo(1825), daysAgo(1676)],
+                    [daysAgo(1675), daysAgo(1526)],
+                    [daysAgo(1525), daysAgo(1376)],
+                    [daysAgo(1375), daysAgo(1226)],
+                    [daysAgo(1225), daysAgo(1076)],
+                    [daysAgo(1075), daysAgo(926)],
+                    [daysAgo(925), daysAgo(776)],
+                    [daysAgo(775), daysAgo(626)],
+                    [daysAgo(625), daysAgo(476)],
+                    [daysAgo(475), daysAgo(326)],
+                    [daysAgo(325), daysAgo(176)],
+                    [daysAgo(175), today],
                   ]
                   : period === "W"
                     ? [
@@ -311,7 +319,14 @@ function kisDevPlugin(
               const gubn = gubnMap[period] ?? "0";
               const bymds: string[] =
                 period === "D"
-                  ? [today, daysAgo(100), daysAgo(200), daysAgo(300), daysAgo(400), daysAgo(500), daysAgo(600), daysAgo(700)]
+                  ? [
+                      today,
+                      daysAgo(100), daysAgo(200), daysAgo(300), daysAgo(400),
+                      daysAgo(500), daysAgo(600), daysAgo(700), daysAgo(800),
+                      daysAgo(900), daysAgo(1000), daysAgo(1100), daysAgo(1200),
+                      daysAgo(1300), daysAgo(1400), daysAgo(1500), daysAgo(1600),
+                      daysAgo(1700), daysAgo(1800),
+                    ]
                   : period === "W"
                     ? [today, daysAgo(700), daysAgo(1400), daysAgo(2100)]
                     : [today, daysAgo(3000), daysAgo(6000)];

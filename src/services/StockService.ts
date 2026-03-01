@@ -197,21 +197,147 @@ export class StockService {
     }
   }
 
+  // ── 주요 세계 사건 데이터베이스 ───────────────────────────────────────────
+  private static readonly WORLD_EVENTS: {
+    date: string;
+    label: string;
+    text: string;
+  }[] = [
+    {
+      date: "2001-09-11",
+      label: "9/11",
+      text: "미국 9.11 테러 — 전 세계 증시 급락",
+    },
+    { date: "2003-03-20", label: "이라크", text: "이라크 전쟁 개전" },
+    {
+      date: "2008-09-15",
+      label: "리먼",
+      text: "리먼브라더스 파산 — 글로벌 금융위기",
+    },
+    {
+      date: "2010-05-06",
+      label: "플래시",
+      text: "플래시 크래시 — 순간 9.2% 폭락",
+    },
+    {
+      date: "2011-08-05",
+      label: "신용강등",
+      text: "S&P, 미국 국가신용등급 AA+로 강등",
+    },
+    {
+      date: "2015-08-24",
+      label: "차이나쇼크",
+      text: "중국 증시 폭락 — 블랙먼데이",
+    },
+    {
+      date: "2016-06-24",
+      label: "브렉시트",
+      text: "영국 EU 탈퇴 결정 — 파운드화 급락",
+    },
+    {
+      date: "2018-12-24",
+      label: "크리스마스폭락",
+      text: "크리스마스 이브 폭락 — 연준 긴축 우려",
+    },
+    {
+      date: "2020-01-27",
+      label: "코로나공포",
+      text: "COVID-19 팬데믹 공포 확산 — 급락 시작",
+    },
+    {
+      date: "2020-03-16",
+      label: "코로나저점",
+      text: "코로나19 최악 — 서킷브레이커 발동",
+    },
+    {
+      date: "2020-11-09",
+      label: "백신",
+      text: "화이자 백신 90% 효과 발표 — 강한 반등",
+    },
+    {
+      date: "2022-02-24",
+      label: "우크라이나",
+      text: "러시아, 우크라이나 침공 개시",
+    },
+    {
+      date: "2022-06-15",
+      label: "75bp인상",
+      text: "연준, 28년만에 75bp 금리인상 단행",
+    },
+    {
+      date: "2022-10-13",
+      label: "CPI쇼크",
+      text: "미국 CPI 8.2% — 인플레이션 쇼크",
+    },
+    {
+      date: "2023-03-10",
+      label: "SVB파산",
+      text: "실리콘밸리은행(SVB) 파산 — 금융 불안",
+    },
+    {
+      date: "2023-11-01",
+      label: "피벗기대",
+      text: "연준 금리동결 — 피벗 기대감 급등",
+    },
+    {
+      date: "2024-08-05",
+      label: "엔캐리청산",
+      text: "일본 금리인상 — 엔 캐리 트레이드 청산 폭락",
+    },
+  ];
+
   static async getEvents(
-    symbol: string,
+    _symbol: string,
     data: OHLCVData[]
   ): Promise<MarketEvent[]> {
+    if (data.length === 0) return [];
+
+    const dateTimes = new Set(data.map((d) => String(d.time)));
+    const dateList = data.map((d) => String(d.time)).sort();
+    const firstDate = dateList[0];
+    const lastDate = dateList[dateList.length - 1];
+
     const events: MarketEvent[] = [];
-    for (const d of data) {
-      const vol = (d.high - d.low) / d.open;
-      if (vol > 0.03 && events.length < 5) {
-        events.push({
-          time: d.time,
-          label: "●",
-          text: `${symbol} 주요 이벤트`,
-        });
+
+    // ── 세계 주요 사건 마커 ───────────────────────────────────────────────
+    for (const ev of StockService.WORLD_EVENTS) {
+      if (ev.date < firstDate || ev.date > lastDate) continue;
+
+      // 해당 날짜가 거래일이면 그대로, 아니면 가장 가까운 거래일 찾기
+      let matchDate = ev.date;
+      if (!dateTimes.has(ev.date)) {
+        // 앞뒤 5일 내 가장 가까운 거래일 탐색
+        let found = "";
+        for (let delta = 1; delta <= 5; delta++) {
+          const after = new Date(ev.date);
+          after.setDate(after.getDate() + delta);
+          const afterStr = after.toISOString().split("T")[0];
+          if (dateTimes.has(afterStr)) {
+            found = afterStr;
+            break;
+          }
+
+          const before = new Date(ev.date);
+          before.setDate(before.getDate() - delta);
+          const beforeStr = before.toISOString().split("T")[0];
+          if (dateTimes.has(beforeStr)) {
+            found = beforeStr;
+            break;
+          }
+        }
+        if (!found) continue;
+        matchDate = found;
       }
+
+      events.push({
+        time: matchDate as import("lightweight-charts").Time,
+        label: ev.label,
+        text: ev.text,
+        color: "#f97316", // 주황색 — 세계 사건
+        eventType: "world",
+      });
     }
+
     return events;
   }
 
