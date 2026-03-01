@@ -182,11 +182,11 @@ async function fetchKRQuote(token: string, symbol: string) {
     price: Number(o.stck_prpr),
     change: Number(o.prdy_vrss),
     changeRate: Number(o.prdy_ctrt),
-    marketCap: Number(o.hts_avls), // 억원 단위로 추정
+    marketCap: Number(o.hts_avls), // 억원 단위
     per: Number(o.per) || undefined,
     currency: "KRW",
   };
-  console.log(`[KIS KR] ${symbol} raw marketCap: ${o.hts_avls}, mapped: ${rtData.marketCap}`);
+  console.log(`[KIS KR] ${symbol} -> Цена: ${rtData.price}, Cap: ${rtData.marketCap}억, PER: ${rtData.per}`);
   return rtData;
 }
 
@@ -212,7 +212,15 @@ async function fetchUSQuote(token: string, symbol: string, excd: string) {
   const pData = await priceRes.json();
   const iData = infoRes ? await infoRes.json() : null;
 
-  if (pData.rt_cd !== "0" || !pData.output) return null;
+  if (pData.rt_cd !== "0" || !pData.output) {
+    console.error(`[KIS US] Price API Error for ${symbol}:`, pData);
+    return null;
+  }
+
+  if (iData && iData.rt_cd !== "0") {
+    console.warn(`[KIS US] Info API Error for ${symbol}:`, iData);
+  }
+
   const po = pData.output;
   const io = iData?.output;
 
@@ -225,7 +233,9 @@ async function fetchUSQuote(token: string, symbol: string, excd: string) {
     currency: "USD",
   };
 
-  console.log(`[KIS US] ${symbol} price: ${rtData.price}, per: ${rtData.per}, marketCap: ${rtData.marketCap}`);
+  console.log(`[KIS US] ${symbol} (${excd}) -> Price: ${rtData.price}, Cap: ${rtData.marketCap}M, PER: ${rtData.per}`);
+  if (!po.last) console.warn(`[KIS US] ${symbol} po.last is empty!`, po);
+
   return rtData;
 }
 
@@ -255,10 +265,14 @@ export default async function handler(req: any, res: any) {
 
     // ── Quote ───────────────────────────────────────────────────────────────
     if (action === "quote") {
+      console.log(`[api/kis] Action: quote, Symbol: ${symbol}, Exchange: ${excd} (isKR: ${isKorean})`);
       const quote = isKorean
         ? await fetchKRQuote(token, symbol)
         : await fetchUSQuote(token, symbol, excd);
-      if (!quote) return res.status(404).json({ error: "시세 데이터 없음" });
+      if (!quote) {
+        console.error(`[api/kis] Quote fetch failed for ${symbol}`);
+        return res.status(404).json({ error: "시세 데이터 없음" });
+      }
       return res.status(200).json(quote);
     }
 

@@ -374,6 +374,40 @@ function newsDevPlugin(apiKey: string): Plugin {
             prev.setDate(prev.getDate() - 1);
             const fromDate = prev.toISOString().split("T")[0];
 
+            const diffDays = (new Date().getTime() - d.getTime()) / (1000 * 3600 * 24);
+
+            if (diffDays > 28) {
+              console.log(`[newsDevPlugin] Date ${date} is old. Using Google News RSS fallback.`);
+              const googleQuery = name ? `${name} ${symbol}` : symbol;
+              const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}+after:${fromDate}+before:${date}&hl=${language === "ko" ? "ko" : "en"}&gl=${region === "KR" ? "KR" : "US"}&ceid=${region === "KR" ? "KR:ko" : "US:en"}`;
+
+              const rssRes = await fetch(googleUrl);
+              const rssText = await rssRes.text();
+
+              const items: any[] = [];
+              const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
+
+              for (const match of itemMatches) {
+                const content = match[1];
+                const title = content.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
+                const link = content.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "";
+                const pubDate = content.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? "";
+                const source = content.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? "";
+
+                items.push({
+                  title: title.replace(/ - .*$/, ""),
+                  url: link,
+                  publishedAt: new Date(pubDate).toISOString(),
+                  source: { name: source }
+                });
+                if (items.length >= 10) break;
+              }
+
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ articles: items }));
+              return;
+            }
+
             const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${date}&sortBy=relevancy&language=${language}&pageSize=10&apiKey=${apiKey}`;
             const upstream = await fetch(apiUrl);
             const data = await upstream.json();

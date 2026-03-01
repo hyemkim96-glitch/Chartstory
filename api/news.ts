@@ -36,6 +36,43 @@ export default async function handler(req: any, res: any) {
         prev.setDate(prev.getDate() - 1);
         const fromDate = prev.toISOString().split("T")[0];
 
+        // Check if date is older than 30 days
+        const diffDays = (new Date().getTime() - d.getTime()) / (1000 * 3600 * 24);
+
+        if (diffDays > 28) {
+            console.log(`[api/news] Date ${date} is old (${Math.floor(diffDays)} days ago). Using Google News RSS fallback.`);
+
+            // Google News RSS fallback
+            const googleQuery = name ? `${name} ${symbol}` : symbol;
+            const googleUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery)}+after:${fromDate}+before:${date}&hl=${language === "ko" ? "ko" : "en"}&gl=${region === "KR" ? "KR" : "US"}&ceid=${region === "KR" ? "KR:ko" : "US:en"}`;
+
+            console.log(`[api/news] RSS URL: ${googleUrl}`);
+            const rssRes = await fetch(googleUrl);
+            const rssText = await rssRes.text();
+
+            // Simple regex extraction for RSS items (title, link, pubDate, source)
+            const items: any[] = [];
+            const itemMatches = rssText.matchAll(/<item>([\s\S]*?)<\/item>/g);
+
+            for (const match of itemMatches) {
+                const content = match[1];
+                const title = content.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
+                const link = content.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "";
+                const pubDate = content.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? "";
+                const source = content.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? "";
+
+                items.push({
+                    title: title.replace(/ - .*$/, ""), // Strip source from title
+                    url: link,
+                    publishedAt: new Date(pubDate).toISOString(),
+                    source: { name: source }
+                });
+                if (items.length >= 10) break;
+            }
+
+            return res.status(200).json({ articles: items });
+        }
+
         const apiUrl = `${NEWSAPI_BASE}/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${date}&sortBy=relevancy&language=${language}&pageSize=10&apiKey=${NEWSAPI_KEY}`;
 
         console.log(`[api/news] Proxying to: ${apiUrl}`);
@@ -49,7 +86,7 @@ export default async function handler(req: any, res: any) {
 
         return res.status(200).json(data);
     } catch (err) {
-        console.error("NewsAPI proxy 오류:", err);
+        console.error("NewsAPI/RSS proxy 오류:", err);
         return res.status(500).json({ error: String(err) });
     }
 }

@@ -95,7 +95,7 @@ function App() {
         {/* 종목 헤더 */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-default">
           <div className="space-y-1">
-            <h2 className="text-[2.5rem] font-bold tracking-tight text-primary leading-none tabular-nums">
+            <h2 className="text-3xl font-bold tracking-tight text-primary leading-none tabular-nums">
               {currentStock?.symbol}
             </h2>
             <p className="text-sm text-secondary">
@@ -108,7 +108,7 @@ function App() {
               <span className="text-xs font-medium text-secondary uppercase tracking-wider">
                 현재가
               </span>
-              <div className="text-[2rem] font-bold text-primary tabular-nums leading-none">
+              <div className="text-2xl font-bold text-primary tabular-nums leading-none">
                 {quoteLoading
                   ? "—"
                   : quote
@@ -135,7 +135,7 @@ function App() {
                 ) : (
                   <>
                     {fmtChangeRate(quote.changeRate)}{" "}
-                    <span className="text-sm font-normal text-secondary">
+                    <span className="text-xs font-normal text-secondary ml-1">
                       {fmtChange(quote.change, currency)}
                     </span>
                   </>

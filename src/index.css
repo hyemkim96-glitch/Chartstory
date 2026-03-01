@@ -40,6 +40,14 @@
   --radius-md: var(--radius-md-token);
   --radius-sm: var(--radius-sm-token);
 
+  --font-size-xs: var(--text-xs);
+  --font-size-sm: var(--text-sm);
+  --font-size-base: var(--text-base);
+  --font-size-lg: var(--text-lg);
+  --font-size-xl: var(--text-xl);
+  --font-size-2xl: var(--text-2xl);
+  --font-size-3xl: var(--text-3xl);
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
@@ -47,6 +55,7 @@
     from {
       height: 0;
     }
+
     to {
       height: var(--radix-accordion-content-height);
     }
@@ -56,6 +65,7 @@
     from {
       height: var(--radix-accordion-content-height);
     }
+
     to {
       height: 0;
     }
@@ -111,6 +121,22 @@
   --radius-lg-token: 6px;
   --radius-full-token: 9999px;
 
+  /* Typography Scale */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-base: 1rem;
+  /* 16px */
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-3xl: 1.875rem;
+  /* 30px */
+
   /* shadcn compat */
   --radius: 4px;
 }
@@ -143,16 +169,20 @@
 
 /* ─── Custom Utilities ─── */
 @layer utilities {
+
   /* Surface backgrounds */
   .bg-surface-base {
     background-color: var(--surface-base);
   }
+
   .bg-surface-01 {
     background-color: var(--surface-01);
   }
+
   .bg-surface-02 {
     background-color: var(--surface-02);
   }
+
   .bg-surface-03 {
     background-color: var(--surface-03);
   }
@@ -161,6 +191,7 @@
   .border-default {
     border-color: var(--border-default);
   }
+
   .border-subtle {
     border-color: var(--border-subtle);
   }
@@ -169,9 +200,11 @@
   .text-primary {
     color: var(--text-primary);
   }
+
   .text-secondary {
     color: var(--text-secondary);
   }
+
   .text-placeholder {
     color: var(--text-placeholder);
   }
@@ -180,9 +213,11 @@
   .text-up {
     color: var(--color-semantic-up);
   }
+
   .text-down {
     color: var(--color-semantic-down);
   }
+
   .text-brand {
     color: var(--color-brand-blue);
   }
@@ -197,6 +232,7 @@
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-default);
   }
+
   .glass-dark {
     background: var(--surface-02);
     border: 1px solid var(--border-default);

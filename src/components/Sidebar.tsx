@@ -29,10 +29,14 @@ export default function Sidebar({ className }: SidebarProps) {
       )}
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-default flex items-center justify-between shrink-0">
-        <h2 className="text-sm font-semibold text-primary">AI 분석</h2>
+      <div className="px-5 py-6 border-b border-default flex items-center justify-between shrink-0">
+        <h2 className="text-xl font-bold text-primary tracking-tight">
+          AI 분석
+        </h2>
         {selection && (
-          <span className="text-[10px] text-secondary">분석 기간</span>
+          <span className="text-xs font-medium text-secondary bg-surface-03 px-2 py-1 border border-default rounded-sm uppercase tracking-wider">
+            분석 중
+          </span>
         )}
       </div>
 
@@ -95,20 +99,20 @@ export default function Sidebar({ className }: SidebarProps) {
             </div>
 
             {/* Headline */}
-            <h3 className="text-sm font-semibold text-primary leading-snug">
+            <h3 className="text-xl font-bold text-primary leading-tight tracking-tight">
               {summary.headline}
             </h3>
 
             {/* Content — brand left border accent */}
-            <p className="text-xs text-secondary leading-relaxed pl-3 border-l-brand">
+            <p className="text-base text-secondary leading-relaxed pl-4 border-l-2 border-brand">
               {summary.content}
             </p>
 
             {/* Source links */}
             {summary.sourceLinks && summary.sourceLinks.length > 0 && (
-              <div className="pt-4 border-t border-default space-y-2">
-                <p className="text-[10px] text-placeholder uppercase tracking-wider">
-                  참고 뉴스
+              <div className="pt-6 border-t border-default space-y-3">
+                <p className="text-xs text-brand font-bold uppercase tracking-widest">
+                  참고 뉴스 자료
                 </p>
                 {summary.sourceLinks.map((link, idx) => (
                   <a
@@ -116,12 +120,12 @@ export default function Sidebar({ className }: SidebarProps) {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-between px-3 py-2 bg-surface-03 border border-default hover:border-[#1A6EFF] transition-colors group"
+                    className="flex items-center justify-between px-4 py-3 bg-surface-03 border border-default hover:border-brand transition-all group rounded-sm"
                   >
-                    <span className="text-xs text-secondary group-hover:text-primary truncate pr-3 transition-colors">
+                    <span className="text-sm font-medium text-secondary group-hover:text-primary truncate pr-4 transition-colors">
                       {link.title}
                     </span>
-                    <ExternalLink className="w-3 h-3 shrink-0 text-placeholder group-hover:text-[#1A6EFF] transition-colors" />
+                    <ExternalLink className="w-4 h-4 shrink-0 text-placeholder group-hover:text-brand transition-colors" />
                   </a>
                 ))}
               </div>
