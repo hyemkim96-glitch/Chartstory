@@ -56,17 +56,23 @@ export default async function handler(req: any, res: any) {
 
             for (const match of itemMatches) {
                 const content = match[1];
+                // More robust regex for title, link, source
                 const title = content.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
                 const link = content.match(/<link>([\s\S]*?)<\/link>/)?.[1] ?? "";
                 const pubDate = content.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] ?? "";
                 const source = content.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] ?? "";
 
-                items.push({
-                    title: title.replace(/ - .*$/, ""), // Strip source from title
-                    url: link,
-                    publishedAt: new Date(pubDate).toISOString(),
-                    source: { name: source }
-                });
+                // Clean up XML entities or CDATA if present
+                const clean = (str: string) => str.replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").trim();
+
+                if (title && link) {
+                    items.push({
+                        title: clean(title).replace(/ - .*$/, ""),
+                        url: clean(link),
+                        publishedAt: new Date(pubDate).toISOString(),
+                        source: { name: clean(source) }
+                    });
+                }
                 if (items.length >= 10) break;
             }
 
