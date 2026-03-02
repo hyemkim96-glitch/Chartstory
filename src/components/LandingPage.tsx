@@ -36,6 +36,7 @@ const WORLD_EVENTS = [
 export default function LandingPage({ onStart }: LandingPageProps) {
   const scrollRefs = useRef<NodeListOf<Element> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const ctaSearchRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StockMetadata[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -63,7 +64,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+      const isOutsideTop =
+        searchRef.current && !searchRef.current.contains(e.target as Node);
+      const isOutsideBottom =
+        ctaSearchRef.current &&
+        !ctaSearchRef.current.contains(e.target as Node);
+
+      if (isOutsideTop && isOutsideBottom) {
         setResults([]);
       }
     };
@@ -561,9 +568,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <br className="hidden md:block" />
             AI 분석을 즉시 확인할 수 있습니다.
           </p>
-          <div ref={null} className="relative w-full max-w-md mx-auto">
+          <div ref={ctaSearchRef} className="relative w-full max-w-md mx-auto">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
+              {isSearching ? (
+                <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary animate-spin" />
+              ) : (
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
+              )}
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
