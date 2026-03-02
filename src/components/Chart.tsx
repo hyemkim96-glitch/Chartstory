@@ -199,17 +199,28 @@ export default function Chart() {
       const worldEvent = eventsRef.current.find(
         (ev) => ev.eventType === "world" && String(ev.time) === dateStr
       );
-      if (worldEvent?.wikiUrl) {
-        setTooltip({
-          x: param.point.x,
-          y: param.point.y,
-          label: worldEvent.label,
-          text: worldEvent.text,
-          wikiUrl: worldEvent.wikiUrl,
-        });
-      } else {
-        setTooltip(null);
+
+      if (worldEvent?.wikiUrl && seriesRef.current) {
+        // 캔들 고점 좌표 확인
+        const candle = chartDataRef.current.find(
+          (d) => String(d.time) === dateStr
+        );
+        if (candle) {
+          const highY = seriesRef.current.priceToCoordinate(candle.high);
+          // 아이콘 영역(고점 위 10px 이상)에 호버했을 때만 툴팁 표시
+          if (highY !== null && param.point.y < highY - 10) {
+            setTooltip({
+              x: param.point.x,
+              y: param.point.y,
+              label: worldEvent.label,
+              text: worldEvent.text,
+              wikiUrl: worldEvent.wikiUrl,
+            });
+            return;
+          }
+        }
       }
+      setTooltip(null);
     };
 
     const handleChartClick = async (param: MouseEventParams) => {
