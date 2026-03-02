@@ -58,9 +58,17 @@ function fmtPer(per: number | undefined): string {
 // ── App ──────────────────────────────────────────────────────────────────────
 function App() {
   const [showLanding, setShowLanding] = useState(true);
+  const { setStock } = useAppStore();
 
   if (showLanding) {
-    return <LandingPage onStart={() => setShowLanding(false)} />;
+    return (
+      <LandingPage
+        onStart={(stock) => {
+          setStock(stock);
+          setShowLanding(false);
+        }}
+      />
+    );
   }
 
   return <AppMain />;

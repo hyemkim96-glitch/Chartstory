@@ -1,8 +1,10 @@
-import { useEffect, useRef } from "react";
-import { ArrowRight, MousePointer2, Sparkles, Globe2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MousePointer2, Sparkles, Globe2, Search, Loader2 } from "lucide-react";
+import { StockService } from "@/services/StockService";
+import type { StockMetadata } from "@/types";
 
 interface LandingPageProps {
-  onStart: () => void;
+  onStart: (stock: StockMetadata) => void;
 }
 
 // ── Mini chart demo: candles positions (x, y-top, height, type) ──────────────
@@ -25,6 +27,41 @@ const WORLD_EVENTS = [
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   const scrollRefs = useRef<NodeListOf<Element> | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<StockMetadata[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.trim()) {
+        setIsSearching(true);
+        try {
+          const res = await StockService.searchStocks(query);
+          setResults(res);
+        } catch {
+          // ignore
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setResults([]);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -45,16 +82,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-surface-01 text-primary overflow-x-hidden">
       {/* ── Nav ─────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 h-14 border-b border-default bg-surface-01/90 backdrop-blur-sm">
+      <nav className="fixed top-0 inset-x-0 z-50 flex items-center px-8 h-14 border-b border-default bg-surface-01/90 backdrop-blur-sm">
         <span className="text-sm font-bold tracking-tight text-primary">
           ChartStory
         </span>
-        <button
-          onClick={onStart}
-          className="flex items-center gap-1.5 text-xs font-semibold text-brand border border-brand/40 px-4 py-1.5 hover:bg-brand/10 transition-colors"
-        >
-          분석 시작 <ArrowRight className="w-3 h-3" />
-        </button>
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────── */}
@@ -126,14 +157,47 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             AI가 그 날의 경제·정치·기업 이벤트를 즉시 분석합니다.
           </p>
 
-          <button
-            onClick={onStart}
-            className="inline-flex items-center gap-2 bg-brand text-white font-semibold px-8 py-3.5 text-sm hover:bg-[#1558e0] transition-colors active:scale-[0.98]"
+          {/* Search input */}
+          <div
+            ref={searchRef}
+            className="relative w-full max-w-md mx-auto"
             style={{ opacity: 0, animation: "fadeIn 0.6s ease forwards 1.2s" }}
           >
-            차트 분석 시작하기
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            <div className="relative">
+              {isSearching ? (
+                <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary animate-spin" />
+              ) : (
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
+              )}
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="종목명 또는 심볼 검색... (예: 삼성전자, AAPL)"
+                className="w-full pl-10 pr-4 h-12 bg-surface-02 border border-default text-sm text-primary placeholder:text-placeholder focus:border-brand outline-none transition-colors"
+              />
+            </div>
+            {results.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-surface-03 border border-default z-50 max-h-64 overflow-y-auto">
+                {results.map((stock) => (
+                  <button
+                    key={stock.symbol}
+                    onClick={() => onStart(stock)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-02 transition-colors border-b border-subtle last:border-0 text-left"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-primary">
+                        {stock.symbol}
+                      </div>
+                      <div className="text-xs text-secondary">{stock.name}</div>
+                    </div>
+                    <div className="text-[11px] text-secondary font-medium px-2 py-0.5 border border-default">
+                      {stock.exchange}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Scroll hint */}
@@ -489,13 +553,38 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <br className="hidden md:block" />
             AI 분석을 즉시 확인할 수 있습니다.
           </p>
-          <button
-            onClick={onStart}
-            className="inline-flex items-center gap-2 bg-brand text-white font-semibold px-10 py-4 text-sm hover:bg-[#1558e0] transition-colors active:scale-[0.98]"
-          >
-            차트 분석 시작하기
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div ref={null} className="relative w-full max-w-md mx-auto">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="종목명 또는 심볼 검색..."
+                className="w-full pl-10 pr-4 h-12 bg-surface-02 border border-default text-sm text-primary placeholder:text-placeholder focus:border-brand outline-none transition-colors"
+              />
+            </div>
+            {results.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-surface-03 border border-default z-50 max-h-64 overflow-y-auto">
+                {results.map((stock) => (
+                  <button
+                    key={stock.symbol}
+                    onClick={() => onStart(stock)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-02 transition-colors border-b border-subtle last:border-0 text-left"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-primary">
+                        {stock.symbol}
+                      </div>
+                      <div className="text-xs text-secondary">{stock.name}</div>
+                    </div>
+                    <div className="text-[11px] text-secondary font-medium px-2 py-0.5 border border-default">
+                      {stock.exchange}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
