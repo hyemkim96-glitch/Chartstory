@@ -121,21 +121,19 @@ export class StockService {
   ): Promise<OHLCVData[]> {
     console.log(`차트 데이터 요청: ${symbol} (${range})`);
 
-    const period = PERIOD_MAP[range];
-    const exchange = stock?.exchange ?? "NASDAQ";
-
-    const params = new URLSearchParams({ symbol, period, exchange });
-    const url = `/api/kis?${params.toString()}`;
+    const isUS = stock?.region === "US";
+    const url = isUS
+      ? `/api/yahoo?${new URLSearchParams({ symbol, range }).toString()}`
+      : `/api/kis?${new URLSearchParams({ symbol, period: PERIOD_MAP[range], exchange: stock?.exchange ?? "KRX" }).toString()}`;
 
     try {
-      // 30 s timeout — KIS API calls run in parallel on the server
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 30000);
 
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
 
-      if (!res.ok) throw new Error(`KIS API ${res.status}`);
+      if (!res.ok) throw new Error(`API ${res.status}`);
       const rows: Array<{
         time: string;
         open: number;
@@ -156,7 +154,10 @@ export class StockService {
         value: r.value,
       }));
     } catch (err) {
-      console.warn("KIS API 실패, 목업 데이터 사용:", err);
+      console.warn(
+        `${isUS ? "Yahoo" : "KIS"} API 실패, 목업 데이터 사용:`,
+        err
+      );
       return getMockData(symbol, range);
     }
   }
@@ -165,20 +166,20 @@ export class StockService {
     symbol: string,
     stock?: StockMetadata
   ): Promise<QuoteData | null> {
-    const exchange = stock?.exchange ?? "NASDAQ";
-    const params = new URLSearchParams({ action: "quote", symbol, exchange });
+    const isUS = stock?.region === "US";
+    const url = isUS
+      ? `/api/yahoo?${new URLSearchParams({ action: "quote", symbol }).toString()}`
+      : `/api/kis?${new URLSearchParams({ action: "quote", symbol, exchange: stock?.exchange ?? "KRX" }).toString()}`;
 
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(`/api/kis?${params.toString()}`, {
-        signal: controller.signal,
-      });
+      const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
-      if (!res.ok) throw new Error(`KIS quote ${res.status}`);
+      if (!res.ok) throw new Error(`Quote API ${res.status}`);
       return await res.json();
     } catch (err) {
-      console.warn("KIS Quote 실패:", err);
+      console.warn(`${isUS ? "Yahoo" : "KIS"} Quote 실패:`, err);
       return null;
     }
   }

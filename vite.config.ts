@@ -368,6 +368,134 @@ function kisDevPlugin(
   };
 }
 
+// ── Yahoo Finance dev middleware plugin ──────────────────────────────────────
+// Handles /api/yahoo requests locally — mirrors api/yahoo.ts behavior exactly
+function yahooDevPlugin(): Plugin {
+  const YAHOO_BASE = "https://query1.finance.yahoo.com";
+  const FETCH_HEADERS = {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    Accept: "application/json",
+  };
+  const RANGE_MAP: Record<string, { interval: string; range: string }> = {
+    "1M": { interval: "1d", range: "1mo" },
+    "3M": { interval: "1d", range: "3mo" },
+    "6M": { interval: "1d", range: "6mo" },
+    "1Y": { interval: "1d", range: "1y" },
+    "5Y": { interval: "1wk", range: "5y" },
+    MAX: { interval: "1mo", range: "max" },
+  };
+
+  function toIso(ts: number): string {
+    return new Date(ts * 1000).toISOString().split("T")[0];
+  }
+
+  return {
+    name: "yahoo-dev-proxy",
+    configureServer(server) {
+      server.middlewares.use(
+        async (
+          req: IncomingMessage,
+          res: ServerResponse,
+          next: () => void
+        ) => {
+          if (!req.url?.startsWith("/api/yahoo")) return next();
+
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+
+          try {
+            const url = new URL(req.url, "http://localhost");
+            const action = url.searchParams.get("action") ?? "chart";
+            const symbol = url.searchParams.get("symbol") ?? "";
+
+            if (!symbol) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "symbol required" }));
+              return;
+            }
+
+            if (action === "quote") {
+              const r = await fetch(
+                `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`,
+                { headers: FETCH_HEADERS }
+              );
+              const data = (await r.json()) as any;
+              const meta = data.chart?.result?.[0]?.meta;
+              if (!meta) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: "No quote data" }));
+                return;
+              }
+              const price: number = meta.regularMarketPrice ?? 0;
+              const prev: number =
+                meta.previousClose ?? meta.chartPreviousClose ?? price;
+              const change = price - prev;
+              const changeRate = prev !== 0 ? (change / prev) * 100 : 0;
+              res.end(
+                JSON.stringify({
+                  price,
+                  change,
+                  changeRate,
+                  marketCap: meta.marketCap
+                    ? meta.marketCap / 1_000_000
+                    : undefined,
+                  per: undefined,
+                  currency: meta.currency ?? "USD",
+                })
+              );
+              return;
+            }
+
+            const range = url.searchParams.get("range") ?? "1Y";
+            const { interval, range: yahooRange } =
+              RANGE_MAP[range] ?? RANGE_MAP["1Y"];
+
+            const r = await fetch(
+              `${YAHOO_BASE}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${yahooRange}&events=history`,
+              { headers: FETCH_HEADERS }
+            );
+            const data = (await r.json()) as any;
+            const result = data.chart?.result?.[0];
+            if (!result) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: "No chart data" }));
+              return;
+            }
+
+            const timestamps: number[] = result.timestamp ?? [];
+            const q = result.indicators?.quote?.[0] ?? {};
+            const {
+              open = [],
+              high = [],
+              low = [],
+              close = [],
+              volume = [],
+            } = q;
+
+            const rows = timestamps
+              .map((ts: number, i: number) => ({
+                time: toIso(ts),
+                open: open[i] as number,
+                high: high[i] as number,
+                low: low[i] as number,
+                close: close[i] as number,
+                value: (volume[i] as number) ?? 0,
+              }))
+              .filter((row: any) => row.open != null && row.open > 0);
+
+            res.end(JSON.stringify(rows));
+          } catch (err) {
+            console.error("Yahoo dev proxy 오류:", err);
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: String(err) }));
+          }
+        }
+      );
+    },
+  };
+}
+
 // ── News dev middleware plugin ──────────────────────────────────────────────
 // Handles /api/news requests locally — mirrors api/news.ts behavior exactly
 function newsDevPlugin(apiKey: string): Plugin {
@@ -555,6 +683,7 @@ export default defineConfig(({ mode }) => {
         env.KIS_APP_SECRET,
         env.KIS_ACCOUNT_TYPE ?? "real"
       ),
+      yahooDevPlugin(),
       newsDevPlugin(env.NEWSAPI_KEY),
     ],
     resolve: {
