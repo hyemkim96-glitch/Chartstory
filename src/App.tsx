@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Layout from "./components/Layout";
 import Chart from "./components/Chart";
+import LandingPage from "./components/LandingPage";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
 import { StockService } from "@/services/StockService";
@@ -56,6 +57,16 @@ function fmtPer(per: number | undefined): string {
 
 // ── App ──────────────────────────────────────────────────────────────────────
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
+
+  if (showLanding) {
+    return <LandingPage onStart={() => setShowLanding(false)} />;
+  }
+
+  return <AppMain />;
+}
+
+function AppMain() {
   const {
     currentStock,
     timeRange,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createChart,
   ColorType,
@@ -20,6 +20,24 @@ import { NewsService } from "@/services/NewsService";
 import { AIService, type CandleInfo } from "@/services/AIService";
 import type { OHLCVData } from "@/types";
 
+type TooltipData = {
+  x: number;
+  y: number;
+  label: string;
+  text: string;
+  wikiUrl: string;
+} | null;
+
+function extractDate(time: Time): string {
+  if (typeof time === "string") return time;
+  if (typeof time === "number") {
+    return new Date(time * 1000).toISOString().split("T")[0];
+  }
+  // BusinessDay
+  const bd = time as BusinessDay;
+  return `${bd.year}-${String(bd.month).padStart(2, "0")}-${String(bd.day).padStart(2, "0")}`;
+}
+
 export default function Chart() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -27,13 +45,13 @@ export default function Chart() {
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
   const chartDataRef = useRef<OHLCVData[]>([]); // 클릭 시 캔들 조회용
   const eventsRef = useRef<import("@/types").MarketEvent[]>([]); // 세계 사건 위키 링크용
+  const [tooltip, setTooltip] = useState<TooltipData>(null);
   const {
     currentStock,
     timeRange,
     setSelection,
     setLoading,
     setSummary,
-    setWorldEvent,
     setError,
   } = useAppStore();
 
@@ -162,34 +180,41 @@ export default function Chart() {
   useEffect(() => {
     if (!chartRef.current) return;
 
+    // Hover: 세계 사건 마커 위 툴팁 표시
+    const handleCrosshairMove = (param: MouseEventParams) => {
+      if (!param.time || !param.point) {
+        setTooltip(null);
+        return;
+      }
+      const dateStr = extractDate(param.time);
+      const worldEvent = eventsRef.current.find(
+        (ev) => ev.eventType === "world" && String(ev.time) === dateStr
+      );
+      if (worldEvent?.wikiUrl) {
+        setTooltip({
+          x: param.point.x,
+          y: param.point.y,
+          label: worldEvent.label,
+          text: worldEvent.text,
+          wikiUrl: worldEvent.wikiUrl,
+        });
+      } else {
+        setTooltip(null);
+      }
+    };
+
     const handleChartClick = async (param: MouseEventParams) => {
       if (param.time && currentStock) {
-        let dateStr = "";
+        const dateStr = extractDate(param.time);
 
-        if (typeof param.time === "string") {
-          dateStr = param.time;
-        } else if (typeof param.time === "number") {
-          // Unix timestamp
-          dateStr = new Date(param.time * 1000).toISOString().split("T")[0];
-        } else {
-          // BusinessDay object { year: number, month: number, day: number }
-          const bd = param.time as BusinessDay;
-          dateStr = `${bd.year}-${String(bd.month).padStart(2, "0")}-${String(bd.day).padStart(2, "0")}`;
-        }
-
-        // 세계 사건 마커: 사이드바에 링크 표시 (차트 클릭으로는 위키 자동이동 X)
+        // 세계 사건 마커: 클릭 시 링크 이동 (뉴스 호출은 하지 않음)
         const worldEvent = eventsRef.current.find(
           (ev) => ev.eventType === "world" && String(ev.time) === dateStr
         );
-        setWorldEvent(
-          worldEvent?.wikiUrl
-            ? {
-                label: worldEvent.label,
-                text: worldEvent.text,
-                wikiUrl: worldEvent.wikiUrl,
-              }
-            : null
-        );
+        if (worldEvent?.wikiUrl) {
+          window.open(worldEvent.wikiUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
 
         setSelection({
           from: param.time,
@@ -239,23 +264,52 @@ export default function Chart() {
       }
     };
 
+    chartRef.current.subscribeCrosshairMove(handleCrosshairMove);
     chartRef.current.subscribeClick(handleChartClick);
 
     return () => {
+      chartRef.current?.unsubscribeCrosshairMove(handleCrosshairMove);
       chartRef.current?.unsubscribeClick(handleChartClick);
     };
-  }, [
-    currentStock,
-    setSelection,
-    setLoading,
-    setSummary,
-    setWorldEvent,
-    setError,
-  ]);
+  }, [currentStock, timeRange, setSelection, setLoading, setSummary, setError]);
+
+  // Tooltip positioning: flip if near right/top edge
+  const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+  const TOOLTIP_W = 230;
+  const TOOLTIP_H = 90;
+  const tooltipLeft = tooltip
+    ? tooltip.x + 12 + TOOLTIP_W > containerWidth
+      ? tooltip.x - TOOLTIP_W - 12
+      : tooltip.x + 12
+    : 0;
+  const tooltipTop = tooltip
+    ? tooltip.y - 12 < 0
+      ? tooltip.y + 12
+      : tooltip.y - TOOLTIP_H
+    : 0;
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
       <div ref={chartContainerRef} className="w-full h-full" />
+      {tooltip && (
+        <div
+          className="pointer-events-none absolute z-50 border border-[#f97316]/60 bg-[#1a1a1a] shadow-lg"
+          style={{
+            left: tooltipLeft,
+            top: tooltipTop,
+            width: TOOLTIP_W,
+            padding: "10px 12px",
+          }}
+        >
+          <p className="text-[10px] font-bold text-[#f97316] uppercase tracking-widest mb-1.5">
+            {tooltip.label}
+          </p>
+          <p className="text-xs text-[#e5e5e5] leading-snug mb-2">
+            {tooltip.text}
+          </p>
+          <p className="text-[10px] text-[#6b6b6b]">클릭하여 자세히 보기 →</p>
+        </div>
+      )}
     </div>
   );
 }

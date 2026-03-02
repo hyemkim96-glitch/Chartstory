@@ -167,6 +167,54 @@
   }
 }
 
+/* ─── Landing page scroll & demo animations ─── */
+.scroll-fade {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scroll-fade.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-fade-delay-1 { transition-delay: 0.12s; }
+.scroll-fade-delay-2 { transition-delay: 0.24s; }
+.scroll-fade-delay-3 { transition-delay: 0.36s; }
+.scroll-fade-delay-4 { transition-delay: 0.48s; }
+
+@keyframes demo-cursor-move {
+  0%,   12% { transform: translate(0px, 90px);   opacity: 0; }
+  20%        { transform: translate(0px, 90px);   opacity: 1; }
+  42%,  86%  { transform: translate(170px, 16px); opacity: 1; }
+  96%, 100%  { transform: translate(0px, 90px);   opacity: 0; }
+}
+@keyframes demo-ripple {
+  0%,  40%  { transform: scale(0);   opacity: 0; }
+  42%        { transform: scale(0);   opacity: 0.9; }
+  58%        { transform: scale(2.4); opacity: 0; }
+  100%       { opacity: 0; }
+}
+@keyframes demo-panel-appear {
+  0%,  42%  { transform: translateX(100%); opacity: 0; }
+  54%,  84%  { transform: translateX(0);   opacity: 1; }
+  94%, 100%  { transform: translateX(100%); opacity: 0; }
+}
+@keyframes demo-candle-selected {
+  0%,  41%  { fill: #f43f5e; filter: none; }
+  42%,  84%  { fill: #1a6eff; filter: drop-shadow(0 0 6px rgba(26,110,255,0.6)); }
+  94%, 100%  { fill: #f43f5e; filter: none; }
+}
+@keyframes hero-line-draw {
+  from { stroke-dashoffset: 800; opacity: 0.3; }
+  to   { stroke-dashoffset: 0;   opacity: 0.15; }
+}
+
+.demo-cursor       { animation: demo-cursor-move  9s ease-in-out infinite; }
+.demo-ripple       { animation: demo-ripple        9s ease-in-out infinite; }
+.demo-panel        { animation: demo-panel-appear  9s ease-in-out infinite; }
+.demo-candle-sel   { animation: demo-candle-selected 9s ease-in-out infinite; }
+
 /* ─── Custom Utilities ─── */
 @layer utilities {
 
