@@ -216,13 +216,25 @@ export default function Chart() {
       if (param.time && currentStock) {
         const dateStr = extractDate(param.time);
 
-        // 세계 사건 마커: 클릭 시 링크 이동 (뉴스 호출은 하지 않음)
+        // 세계 사건 마커: 아이콘 영역을 정확히 클릭했을 때만 링크 이동
         const worldEvent = eventsRef.current.find(
           (ev) => ev.eventType === "world" && String(ev.time) === dateStr
         );
-        if (worldEvent?.wikiUrl) {
-          window.open(worldEvent.wikiUrl, "_blank", "noopener,noreferrer");
-          return;
+
+        if (worldEvent?.wikiUrl && seriesRef.current && param.point) {
+          // 캔들의 고점 좌표 확인
+          const candle = chartDataRef.current.find(
+            (d) => String(d.time) === dateStr
+          );
+          if (candle) {
+            const highY = seriesRef.current.priceToCoordinate(candle.high);
+            // 클릭 지점이 캔들 고점보다 충분히 위(아이콘 영역)인 경우에만 링크 이동
+            // 캔들 마커는 보통 캔들 위 10~30px 정도에 위치함
+            if (highY !== null && param.point.y < highY - 10) {
+              window.open(worldEvent.wikiUrl, "_blank", "noopener,noreferrer");
+              return;
+            }
+          }
         }
 
         setSelection({

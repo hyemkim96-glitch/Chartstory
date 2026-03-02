@@ -187,20 +187,17 @@ export default function Sidebar({ className }: SidebarProps) {
                   <ul className="space-y-2">
                     {summary.sourceLinks.slice(0, 5).map((link, idx) => (
                       <li key={idx}>
-                        <div className="flex items-center justify-between px-3 py-2.5 bg-surface-03 border border-default transition-colors group">
-                          <span className="text-sm text-secondary truncate pr-3 leading-snug select-text cursor-auto">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between px-3 py-2.5 bg-surface-03 border border-default hover:border-brand transition-colors group"
+                        >
+                          <span className="text-sm text-secondary group-hover:text-primary truncate pr-3 transition-colors leading-snug">
                             {link.title}
                           </span>
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 -mr-1.5 rounded-md hover:bg-surface-02 hover:text-brand transition-colors text-placeholder"
-                            title="뉴스 보기"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                          </a>
-                        </div>
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0 text-placeholder group-hover:text-brand transition-colors" />
+                        </a>
                       </li>
                     ))}
                   </ul>
