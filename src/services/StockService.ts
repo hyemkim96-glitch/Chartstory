@@ -87,43 +87,29 @@ function aggregateMonthly(daily: OHLCVData[]): OHLCVData[] {
   return [...map.values()];
 }
 
-function aggregateYearly(daily: OHLCVData[]): OHLCVData[] {
-  const map = new Map<string, OHLCVData>();
-  for (const d of daily) {
-    const key = (d.time as string).slice(0, 4) + "-01-01";
-    if (!map.has(key)) {
-      map.set(key, { ...d, time: key as Time });
-    } else {
-      const y = map.get(key)!;
-      y.high = Math.max(y.high, d.high);
-      y.low = Math.min(y.low, d.low);
-      y.close = d.close;
-      y.value = (y.value ?? 0) + (d.value ?? 0);
-    }
-  }
-  return [...map.values()];
-}
-
 function getMockData(symbol: string, range: TimeRange): OHLCVData[] {
   const daysMap: Record<TimeRange, number> = {
-    일: 730,
-    주: 1825,
-    월: 5475,
-    년: 9125,
+    "1M": 730,
+    "3M": 730,
+    "6M": 730,
+    "1Y": 730,
+    "5Y": 1825,
+    MAX: 3650,
   };
   const daily = generateMock(symbol, daysMap[range]);
-  if (range === "주") return aggregateWeekly(daily);
-  if (range === "월") return aggregateMonthly(daily);
-  if (range === "년") return aggregateYearly(daily);
+  if (range === "5Y") return aggregateWeekly(daily);
+  if (range === "MAX") return aggregateMonthly(daily);
   return daily;
 }
 
 // ── Period mapping for KIS API ───────────────────────────────────────────────
 const PERIOD_MAP: Record<TimeRange, string> = {
-  일: "D",
-  주: "W",
-  월: "M",
-  년: "Y",
+  "1M": "D",
+  "3M": "D",
+  "6M": "D",
+  "1Y": "D",
+  "5Y": "W",
+  MAX: "M",
 };
 
 // ── Main service ─────────────────────────────────────────────────────────────
@@ -208,126 +194,122 @@ export class StockService {
       date: "2001-09-11",
       label: "9/11",
       text: "미국 9.11 테러 — 전 세계 증시 급락",
-      wikiUrl: "https://ko.wikipedia.org/wiki/9%C2%B711_%ED%85%8C%EB%9F%AC",
+      wikiUrl: "https://www.google.com/search?q=9/11+테러+미국+증시+충격+2001",
     },
     {
       date: "2003-03-20",
       label: "이라크",
       text: "이라크 전쟁 개전",
-      wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EC%9D%B4%EB%9D%BC%ED%81%AC_%EC%A0%84%EC%9F%81",
+      wikiUrl: "https://www.google.com/search?q=이라크전쟁+2003+증시+영향",
     },
     {
       date: "2008-09-15",
       label: "리먼",
       text: "리먼브라더스 파산 — 글로벌 금융위기",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EB%A6%AC%EB%A8%BC_%EB%B8%8C%EB%9D%BC%EB%8D%94%EC%8A%A4",
+        "https://www.google.com/search?q=리먼브라더스+파산+금융위기+2008",
     },
     {
       date: "2010-05-06",
       label: "플래시",
       text: "플래시 크래시 — 순간 9.2% 폭락",
-      wikiUrl:
-        "https://ko.wikipedia.org/wiki/2010%EB%85%84_%ED%94%8C%EB%9E%98%EC%8B%9C_%ED%81%AC%EB%9E%98%EC%8B%9C",
+      wikiUrl: "https://www.google.com/search?q=플래시크래시+2010+증시+폭락",
     },
     {
       date: "2011-08-05",
       label: "신용강등",
       text: "S&P, 미국 국가신용등급 AA+로 강등",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/2011%EB%85%84_%EB%AF%B8%EA%B5%AD_%EB%B6%80%EC%B1%84_%ED%95%9C%EB%8F%84_%EC%9C%84%EA%B8%B0",
+        "https://www.google.com/search?q=미국+신용등급+강등+2011+증시+영향",
     },
     {
       date: "2015-08-24",
       label: "차이나쇼크",
       text: "중국 증시 폭락 — 블랙먼데이",
-      wikiUrl:
-        "https://ko.wikipedia.org/wiki/2015%EB%85%84_%EC%A4%91%EA%B5%AD_%EC%A3%BC%EA%B0%80_%EB%B6%95%EA%B4%B4",
+      wikiUrl: "https://www.google.com/search?q=중국증시+블랙먼데이+2015+폭락",
     },
     {
       date: "2016-06-24",
       label: "브렉시트",
       text: "영국 EU 탈퇴 결정 — 파운드화 급락",
-      wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EB%B8%8C%EB%A0%89%EC%8B%9C%ED%8A%B8",
+      wikiUrl: "https://www.google.com/search?q=브렉시트+2016+증시+파운드+영향",
     },
     {
       date: "2018-12-24",
       label: "크리스마스폭락",
       text: "크리스마스 이브 폭락 — 연준 긴축 우려",
       wikiUrl:
-        "https://news.google.com/search?q=2018+%ED%81%AC%EB%A6%AC%EC%8A%A4%EB%A7%88%EC%8A%A4+%EC%A6%9D%EC%8B%9C+%ED%8F%AD%EB%9D%BD+%EC%97%B0%EC%A4%80&hl=ko&gl=KR&ceid=KR:ko",
+        "https://www.google.com/search?q=크리스마스+증시+폭락+2018+연준+긴축",
     },
     {
       date: "2020-01-27",
       label: "코로나공포",
       text: "COVID-19 팬데믹 공포 확산 — 급락 시작",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/COVID-19_%ED%8C%AC%EB%8D%B0%EB%AF%B9",
+        "https://www.google.com/search?q=코로나19+팬데믹+공포+증시+급락+2020",
     },
     {
       date: "2020-03-16",
       label: "코로나저점",
       text: "코로나19 최악 — 서킷브레이커 발동",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/COVID-19_%ED%8C%AC%EB%8D%B0%EB%AF%B9",
+        "https://www.google.com/search?q=코로나19+서킷브레이커+증시+저점+2020",
     },
     {
       date: "2020-11-09",
       label: "백신",
       text: "화이자 백신 90% 효과 발표 — 강한 반등",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/COVID-19_%EB%B0%B1%EC%8B%A0_(%ED%99%94%EC%9D%B4%EC%9E%90-%EB%B0%94%EC%9D%B4%EC%98%A4%EC%97%94%ED%85%8D)",
+        "https://www.google.com/search?q=화이자+코로나백신+발표+2020+증시+반등",
     },
     {
       date: "2022-02-24",
       label: "우크라이나",
       text: "러시아, 우크라이나 침공 개시",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EB%9F%AC%EC%8B%9C%EC%95%84%EC%9D%98_%EC%9A%B0%ED%81%AC%EB%9D%BC%EC%9D%B4%EB%82%98_%EC%B9%A8%EA%B3%B5",
+        "https://www.google.com/search?q=러시아+우크라이나+침공+2022+증시",
     },
     {
       date: "2022-06-15",
       label: "75bp인상",
       text: "연준, 28년만에 75bp 금리인상 단행",
       wikiUrl:
-        "https://news.google.com/search?q=%EC%97%B0%EC%A4%80+75bp+%EA%B8%88%EB%A6%AC%EC%9D%B8%EC%83%81+2022&hl=ko&gl=KR&ceid=KR:ko",
+        "https://www.google.com/search?q=연준+75bp+금리인상+2022+주식시장",
     },
     {
       date: "2022-10-13",
       label: "CPI쇼크",
       text: "미국 CPI 8.2% — 인플레이션 쇼크",
       wikiUrl:
-        "https://news.google.com/search?q=%EB%AF%B8%EA%B5%AD+CPI+%EC%87%BC%ED%81%AC+%EC%9D%B8%ED%94%8C%EB%A0%88%EC%9D%B4%EC%85%98+2022&hl=ko&gl=KR&ceid=KR:ko",
+        "https://www.google.com/search?q=미국+CPI+8.2+인플레이션+쇼크+2022",
     },
     {
       date: "2023-03-10",
       label: "SVB파산",
       text: "실리콘밸리은행(SVB) 파산 — 금융 불안",
       wikiUrl:
-        "https://ko.wikipedia.org/wiki/%EC%8B%A4%EB%A6%AC%EC%BD%98%EB%B0%B8%EB%A6%AC%EC%9D%80%ED%96%89",
+        "https://www.google.com/search?q=실리콘밸리은행+SVB+파산+2023+금융위기",
     },
     {
       date: "2023-11-01",
       label: "피벗기대",
       text: "연준 금리동결 — 피벗 기대감 급등",
       wikiUrl:
-        "https://news.google.com/search?q=%EC%97%B0%EC%A4%80+%EA%B8%88%EB%A6%AC%EB%8F%99%EA%B2%B0+%ED%94%BC%EB%B2%97+2023&hl=ko&gl=KR&ceid=KR:ko",
+        "https://www.google.com/search?q=연준+금리동결+피벗+기대+2023+주가",
     },
     {
       date: "2024-08-05",
       label: "엔캐리청산",
       text: "일본 금리인상 — 엔 캐리 트레이드 청산 폭락",
       wikiUrl:
-        "https://news.google.com/search?q=%EC%97%94+%EC%BA%90%EB%A6%AC+%EC%B2%AD%EC%82%B0+%ED%8F%AD%EB%9D%BD+2024&hl=ko&gl=KR&ceid=KR:ko",
+        "https://www.google.com/search?q=엔+캐리+청산+폭락+2024+일본+금리",
     },
   ];
 
   static async getEvents(
     _symbol: string,
     data: OHLCVData[],
-    timeRange: TimeRange = "일"
+    timeRange: TimeRange = "1Y"
   ): Promise<MarketEvent[]> {
     if (data.length === 0) return [];
 
@@ -342,16 +324,13 @@ export class StockService {
     for (const ev of StockService.WORLD_EVENTS) {
       let matchDate = "";
 
-      if (timeRange === "년") {
-        // 년봉: 사건 연도와 같은 연도의 캔들에 표시
-        const yearKey = ev.date.slice(0, 4) + "-01-01";
-        if (dateTimes.has(yearKey)) matchDate = yearKey;
-      } else if (timeRange === "월") {
-        // 월봉: 사건 월과 같은 월의 캔들에 표시
-        const monthKey = ev.date.slice(0, 7) + "-01";
-        if (dateTimes.has(monthKey)) matchDate = monthKey;
+      if (timeRange === "MAX") {
+        // 월봉(MAX): 사건 월과 같은 월의 캔들에 표시 (prefix 매칭)
+        const monthPrefix = ev.date.slice(0, 7);
+        const found = dateList.find((d) => d.startsWith(monthPrefix));
+        if (found) matchDate = found;
       } else {
-        // 일봉/주봉: 범위 체크 후 ±7일 내 가장 가까운 거래일
+        // 1M/3M/6M/1Y/5Y: 범위 체크 후 ±7일 내 가장 가까운 거래일
         if (ev.date < firstDate || ev.date > lastDate) continue;
         if (dateTimes.has(ev.date)) {
           matchDate = ev.date;
@@ -381,13 +360,28 @@ export class StockService {
         time: matchDate as import("lightweight-charts").Time,
         label: ev.label,
         text: ev.text,
-        color: "#f97316", // 주황색 — 세계 사건
+        color: "#f97316",
         eventType: "world",
         wikiUrl: ev.wikiUrl,
       });
     }
 
-    return events;
+    // ── 같은 캔들에 겹친 이벤트 병합 ─────────────────────────────────────
+    const mergeMap = new Map<string, MarketEvent>();
+    for (const ev of events) {
+      const key = String(ev.time);
+      if (mergeMap.has(key)) {
+        const existing = mergeMap.get(key)!;
+        existing.label = existing.label + "·" + ev.label;
+        existing.text = existing.text + "\n" + ev.text;
+      } else {
+        mergeMap.set(key, { ...ev });
+      }
+    }
+
+    return [...mergeMap.values()].sort((a, b) =>
+      String(a.time).localeCompare(String(b.time))
+    );
   }
 
   static async searchStocks(query: string): Promise<StockMetadata[]> {

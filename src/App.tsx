@@ -182,15 +182,17 @@ function AppMain() {
               className="bg-surface-03 p-1 border border-default"
             >
               <TabsList className="bg-transparent border-0 gap-0.5">
-                {(["일", "주", "월", "년"] as TimeRange[]).map((r) => (
-                  <TabsTrigger
-                    key={r}
-                    value={r}
-                    className="text-xs font-medium px-4 data-[state=active]:bg-[#1A6EFF] data-[state=active]:text-white transition-colors"
-                  >
-                    {r}
-                  </TabsTrigger>
-                ))}
+                {(["1M", "3M", "6M", "1Y", "5Y", "MAX"] as TimeRange[]).map(
+                  (r) => (
+                    <TabsTrigger
+                      key={r}
+                      value={r}
+                      className="text-xs font-medium px-4 data-[state=active]:bg-[#1A6EFF] data-[state=active]:text-white transition-colors"
+                    >
+                      {r}
+                    </TabsTrigger>
+                  )
+                )}
               </TabsList>
             </Tabs>
           </div>

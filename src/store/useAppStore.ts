@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>((set) => ({
     region: "US",
     currency: "USD",
   },
-  timeRange: "일",
+  timeRange: "1Y",
   chartData: [],
   selection: null,
   summary: null,

@@ -21,7 +21,7 @@ export class AIService {
     date: string,
     news: NewsItem[],
     candle?: CandleInfo,
-    timeRange: TimeRange = "일"
+    timeRange: TimeRange = "1Y"
   ): Promise<AISummary> {
     console.log(
       `[AIService] Summarizing ${symbol} | ${timeRange} | ${date}. Key: ${!!this.apiKey}`
@@ -29,20 +29,20 @@ export class AIService {
 
     // 기간 레이블 (프롬프트용)
     const periodLabel: Record<TimeRange, string> = {
-      일: "당일",
-      주: "해당 주",
-      월: "해당 월",
-      년: "해당 연도",
+      "1M": "당일",
+      "3M": "당일",
+      "6M": "당일",
+      "1Y": "당일",
+      "5Y": "해당 주",
+      MAX: "해당 월",
     };
     const periodStr = periodLabel[timeRange];
 
-    // 년봉은 "2020년", 월봉은 "2020년 3월", 주봉/일봉은 날짜 그대로
+    // MAX(월봉)는 "2020년 3월", 5Y(주봉)는 "해당 주", 나머지는 날짜 그대로
     const dateLabel =
-      timeRange === "년"
-        ? `${new Date(date).getUTCFullYear()}년`
-        : timeRange === "월"
-          ? `${new Date(date).getUTCFullYear()}년 ${new Date(date).getUTCMonth() + 1}월`
-          : date;
+      timeRange === "MAX"
+        ? `${new Date(date).getUTCFullYear()}년 ${new Date(date).getUTCMonth() + 1}월`
+        : date;
 
     if (news.length === 0) {
       return {
@@ -98,8 +98,8 @@ export class AIService {
 
       // 년봉: 연도 중 가장 임팩트 컸던 사건 중심으로 분석 요청
       const yearlyInstruction =
-        timeRange === "년"
-          ? "\n이 연도의 뉴스 중 주가 변동에 가장 큰 영향을 미친 핵심 사건 1~2개에 집중하여 분석해 주세요. 사소한 뉴스는 무시하고, 연도를 대표하는 핵심 이벤트만 다루세요."
+        timeRange === "MAX"
+          ? "\n이 월의 뉴스 중 주가 변동에 가장 큰 영향을 미친 핵심 사건 1~2개에 집중하여 분석해 주세요. 사소한 뉴스는 무시하고, 핵심 이벤트만 다루세요."
           : "";
 
       const prompt = `당신은 한국어로 응답하는 전문 금융 애널리스트입니다.

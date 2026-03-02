@@ -81,6 +81,8 @@ export default function Chart() {
           labelBackgroundColor: "#1e293b",
         },
       },
+      handleScroll: false,
+      handleScale: false,
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight || 500,
     });
@@ -129,18 +131,25 @@ export default function Chart() {
           chartDataRef.current = stockData; // 클릭 시 캔들 조회용 저장
           seriesRef.current.setData(stockData as CandlestickData<Time>[]);
 
-          // 일봉: 최근 2년만 기본 표시 (좌우 스크롤로 과거 탐색)
-          // 그 외: 전체 데이터 맞춤
-          if (timeRange === "일" && stockData.length > 0) {
+          // 프리셋별 표시 범위 설정 (스크롤/확대 비활성화)
+          if (stockData.length > 0) {
             const lastDate = String(stockData[stockData.length - 1].time);
-            const twoYearsAgo = new Date(lastDate);
-            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-            chartRef.current?.timeScale().setVisibleRange({
-              from: twoYearsAgo.toISOString().split("T")[0] as Time,
-              to: lastDate as Time,
-            });
-          } else {
-            chartRef.current?.timeScale().fitContent();
+            if (timeRange === "MAX") {
+              chartRef.current?.timeScale().fitContent();
+            } else {
+              const from = new Date(lastDate);
+              if (timeRange === "1M") from.setMonth(from.getMonth() - 1);
+              else if (timeRange === "3M") from.setMonth(from.getMonth() - 3);
+              else if (timeRange === "6M") from.setMonth(from.getMonth() - 6);
+              else if (timeRange === "1Y")
+                from.setFullYear(from.getFullYear() - 1);
+              else if (timeRange === "5Y")
+                from.setFullYear(from.getFullYear() - 5);
+              chartRef.current?.timeScale().setVisibleRange({
+                from: from.toISOString().split("T")[0] as Time,
+                to: lastDate as Time,
+              });
+            }
           }
 
           // 세계 사건 + 변동성 마커

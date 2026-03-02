@@ -138,11 +138,11 @@ export default function Sidebar({ className }: SidebarProps) {
                 </h3>
               </div>
 
-              {/* 주요 원인 — Carbon list style */}
+              {/* 주요 원인 — Chips style */}
               {summary.keyFactors && summary.keyFactors.length > 0 && (
                 <div>
                   <SectionLabel className="mb-3">주요 원인</SectionLabel>
-                  <ul className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
                     {summary.keyFactors.map((factor, i) => {
                       const colonIdx = factor.indexOf(":");
                       const prefix =
@@ -153,22 +153,22 @@ export default function Sidebar({ className }: SidebarProps) {
                           : factor;
 
                       return (
-                        <li
+                        <div
                           key={i}
-                          className="p-3 bg-surface-03 border border-default"
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-03 border border-default rounded-sm"
                         >
                           {prefix && (
-                            <span className="block text-[11px] font-bold text-brand uppercase tracking-wide mb-3">
+                            <span className="text-[10px] font-bold text-brand uppercase tracking-tight shrink-0">
                               {prefix}
                             </span>
                           )}
-                          <p className="text-sm text-primary leading-snug">
+                          <span className="text-xs text-primary font-medium">
                             {body}
-                          </p>
-                        </li>
+                          </span>
+                        </div>
                       );
                     })}
-                  </ul>
+                  </div>
                 </div>
               )}
 

@@ -12,17 +12,19 @@ interface NewsApiArticle {
 
 // TimeRange → API period 코드
 const PERIOD_MAP: Record<TimeRange, string> = {
-  일: "D",
-  주: "W",
-  월: "M",
-  년: "Y",
+  "1M": "D",
+  "3M": "D",
+  "6M": "D",
+  "1Y": "D",
+  "5Y": "W",
+  MAX: "M",
 };
 
 export class NewsService {
   static async getNewsForDate(
     date: string,
     stock: StockMetadata,
-    timeRange: TimeRange = "일"
+    timeRange: TimeRange = "1Y"
   ): Promise<NewsItem[]> {
     const { symbol, name, region } = stock;
     const period = PERIOD_MAP[timeRange];

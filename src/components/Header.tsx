@@ -9,7 +9,7 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StockMetadata[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { setStock } = useAppStore();
+  const { setStock, setSelection, setSummary } = useAppStore();
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,15 +54,27 @@ export default function Header() {
   return (
     <header className="h-14 border-b border-default flex items-center justify-between px-6 bg-surface-02 sticky top-0 z-50">
       {/* 로고 */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <button
+        onClick={() => {
+          setSelection(null);
+          setSummary(null);
+        }}
+        className="flex items-center gap-2.5 shrink-0 hover:opacity-80 transition-opacity cursor-pointer border-none bg-transparent p-0 focus:outline-none"
+      >
         <div className="w-5 h-5 bg-[#1A6EFF] flex items-center justify-center">
           <span className="text-white text-[10px] font-bold leading-none">
             C
           </span>
         </div>
-        <span className="text-sm font-semibold text-primary">Chartstory</span>
-        <span className="text-xs text-placeholder">AI 주식 분석</span>
-      </div>
+        <div className="flex flex-col items-start">
+          <span className="text-sm font-semibold text-primary leading-tight">
+            Chartstory
+          </span>
+          <span className="text-[10px] text-placeholder leading-tight">
+            AI 주식 분석
+          </span>
+        </div>
+      </button>
 
       {/* 검색 */}
       <div className="flex-1 max-w-md mx-8 relative" ref={searchRef}>
