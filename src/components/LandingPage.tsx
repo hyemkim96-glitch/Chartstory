@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { MousePointer2, Sparkles, Globe2, Search, Loader2 } from "lucide-react";
+import {
+  MousePointer2,
+  Sparkles,
+  Globe2,
+  Search,
+  Loader2,
+  Calendar,
+  Bot,
+} from "lucide-react";
 import { StockService } from "@/services/StockService";
 import type { StockMetadata } from "@/types";
 
@@ -400,21 +408,21 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             {[
               {
                 n: "01",
-                icon: "🔍",
+                icon: <Search className="w-6 h-6 text-brand" />,
                 title: "종목 검색",
                 desc: "국내·해외 주요 종목을 검색하고 선택합니다.",
                 delay: "",
               },
               {
                 n: "02",
-                icon: "📅",
+                icon: <Calendar className="w-6 h-6 text-brand" />,
                 title: "날짜 클릭",
                 desc: "차트에서 궁금한 날짜나 변동점을 클릭합니다.",
                 delay: "scroll-fade-delay-1",
               },
               {
                 n: "03",
-                icon: "🤖",
+                icon: <Bot className="w-6 h-6 text-brand" />,
                 title: "AI 분석 확인",
                 desc: "AI가 뉴스·경제·정치 이벤트를 종합 분석합니다.",
                 delay: "scroll-fade-delay-2",
@@ -427,7 +435,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <div className="text-[10px] font-bold text-brand uppercase tracking-widest mb-4">
                   STEP {step.n}
                 </div>
-                <div className="text-2xl mb-3">{step.icon}</div>
+                <div className="mb-3">{step.icon}</div>
                 <h3 className="text-base font-bold text-primary mb-2">
                   {step.title}
                 </h3>
