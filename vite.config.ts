@@ -497,10 +497,8 @@ function yahooDevPlugin(): Plugin {
 }
 
 // ── News dev middleware plugin ──────────────────────────────────────────────
-// Handles /api/news requests locally — mirrors api/news.ts behavior exactly
-function newsDevPlugin(apiKey: string): Plugin {
-  if (!apiKey) return { name: "news-dev-noop" };
-
+// Handles /api/news requests locally — Google News RSS only, no API key needed
+function newsDevPlugin(): Plugin {
   function getDateRange(
     date: string,
     period: string
@@ -531,7 +529,6 @@ function newsDevPlugin(apiKey: string): Plugin {
         toDate: sunday.toISOString().split("T")[0],
       };
     }
-    // D — 전날 ~ 당일
     const prev = new Date(d);
     prev.setUTCDate(d.getUTCDate() - 1);
     return { fromDate: prev.toISOString().split("T")[0], toDate: date };
@@ -551,7 +548,8 @@ function newsDevPlugin(apiKey: string): Plugin {
     const rssRes = await fetch(googleUrl);
     const rssText = await rssRes.text();
     const items: any[] = [];
-    const clean = (s: string) => s.replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").trim();
+    const clean = (s: string) =>
+      s.replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").trim();
     for (const match of rssText.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
       const c = match[1];
       const title = c.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "";
@@ -571,20 +569,6 @@ function newsDevPlugin(apiKey: string): Plugin {
       if (items.length >= limit) break;
     }
     return items;
-  }
-
-  async function fetchNewsApi(
-    query: string,
-    fromDate: string,
-    toDate: string,
-    language: string,
-    pageSize: number,
-    category: "company" | "macro"
-  ): Promise<any[]> {
-    const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&to=${toDate}&sortBy=relevancy&language=${language}&pageSize=${pageSize}&apiKey=${apiKey}`;
-    const r = await fetch(apiUrl);
-    const d = (await r.json()) as any;
-    return (d.articles ?? []).map((a: any) => ({ ...a, category }));
   }
 
   return {
@@ -610,15 +594,17 @@ function newsDevPlugin(apiKey: string): Plugin {
             const period = url.searchParams.get("period") ?? "D";
 
             const { fromDate, toDate } = getDateRange(date, period);
-            const language = region === "KR" ? "ko" : "en";
             const hl = region === "KR" ? "ko" : "en-US";
             const gl = region === "KR" ? "KR" : "US";
             const ceid = region === "KR" ? "KR:ko" : "US:en";
 
             const year = new Date(date).getUTCFullYear();
-            const yearSuffix = period === "Y"
-              ? (region === "KR" ? ` ${year}년` : ` ${year}`)
-              : "";
+            const yearSuffix =
+              period === "Y"
+                ? region === "KR"
+                  ? ` ${year}년`
+                  : ` ${year}`
+                : "";
             const stockQuery = name
               ? `${symbol} OR "${name}"${yearSuffix}`
               : symbol + yearSuffix;
@@ -631,34 +617,48 @@ function newsDevPlugin(apiKey: string): Plugin {
                 ? "대통령 OR 탄핵 OR 계엄 OR 국회 OR 정치 OR 여야 OR 정권"
                 : null;
 
-            const diffDays =
-              (Date.now() - new Date(fromDate).getTime()) / (1000 * 3600 * 24);
-
             const companyLimit = period === "Y" ? 7 : 5;
             const macroLimit = period === "Y" ? 4 : 3;
             const politicsLimit = 3;
 
-            let articles: any[] = [];
-            if (diffDays > 28) {
-              const requests = [
-                fetchRSS(stockQuery, fromDate, toDate, hl, gl, ceid, "company", companyLimit),
-                fetchRSS(macroQuery, fromDate, toDate, hl, gl, ceid, "macro", macroLimit),
-              ];
-              if (politicsQuery) {
-                requests.push(fetchRSS(politicsQuery, fromDate, toDate, hl, gl, ceid, "macro", politicsLimit));
-              }
-              articles = (await Promise.all(requests)).flat();
-            } else {
-              const requests = [
-                fetchNewsApi(stockQuery, fromDate, toDate, language, companyLimit, "company"),
-                fetchNewsApi(macroQuery, fromDate, toDate, language, macroLimit, "macro"),
-              ];
-              if (politicsQuery) {
-                requests.push(fetchNewsApi(politicsQuery, fromDate, toDate, language, politicsLimit, "macro"));
-              }
-              articles = (await Promise.all(requests)).flat();
+            const requests = [
+              fetchRSS(
+                stockQuery,
+                fromDate,
+                toDate,
+                hl,
+                gl,
+                ceid,
+                "company",
+                companyLimit
+              ),
+              fetchRSS(
+                macroQuery,
+                fromDate,
+                toDate,
+                hl,
+                gl,
+                ceid,
+                "macro",
+                macroLimit
+              ),
+            ];
+            if (politicsQuery) {
+              requests.push(
+                fetchRSS(
+                  politicsQuery,
+                  fromDate,
+                  toDate,
+                  hl,
+                  gl,
+                  ceid,
+                  "macro",
+                  politicsLimit
+                )
+              );
             }
 
+            const articles = (await Promise.all(requests)).flat();
             res.end(JSON.stringify({ articles }));
           } catch (err) {
             res.statusCode = 500;
@@ -684,7 +684,7 @@ export default defineConfig(({ mode }) => {
         env.KIS_ACCOUNT_TYPE ?? "real"
       ),
       yahooDevPlugin(),
-      newsDevPlugin(env.NEWSAPI_KEY),
+      newsDevPlugin(),
     ],
     resolve: {
       alias: {
