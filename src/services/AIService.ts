@@ -75,10 +75,10 @@ export class AIService {
 
       const fmtArticles = (items: NewsItem[]) =>
         items
-          .map(
-            (n) =>
-              `출처: ${n.source}\n제목: ${n.title}\n내용: ${n.description || ""}`
-          )
+          .map((n) => {
+            const base = `출처: ${n.source}\n제목: ${n.title}`;
+            return n.description ? `${base}\n내용: ${n.description}` : base;
+          })
           .join("\n\n");
 
       // 캔들 가격 변동 컨텍스트
@@ -113,7 +113,7 @@ ${macroSection}
 
 반드시 아래 JSON 형식으로만 응답하세요 (마크다운 코드블록 없이):
 {
-  "headline": "뉴스에서 수집된 핵심 키워드(기업명·지표·사건명 등)를 반드시 포함한 25자 이내 한 줄 헤드라인. 예: '엔비디아 실적 서프라이즈·AI 수요 급등', '연준 75bp 인상·달러 강세 압박', 'SVB 파산 충격·금융주 동반 급락'",
+  "headline": "위 뉴스 제목에 실제로 등장한 단어(기업명·수치·사건명)를 그대로 사용한 25자 이내 헤드라인. '주가 상승/하락' 같은 추상적 표현 절대 금지. 예: '엔비디아 실적 서프라이즈·AI 수요 급등', '연준 75bp 인상·달러 강세 압박'",
   "summary": "2문장 이내의 간결한 종합 분석. 무엇이 왜 일어났는지 핵심만 (한국어)",
   "keyFactors": [
     "기업요인: 실적/경영/제품 등 종목 자체 원인 (없으면 생략)",
