@@ -131,17 +131,23 @@ export default async function handler(req: any, res: any) {
 
     const macroQuery =
       region === "KR"
-        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 외국인매도 OR 미중무역"
-        : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff"';
+        ? "코스피 OR 한국은행 OR 기준금리 OR 환율 OR 외국인매도 OR 미중무역 OR 트럼프 OR 관세"
+        : '"stock market" OR "Federal Reserve" OR "interest rate" OR "S&P 500" OR "inflation" OR "recession" OR "tariff" OR "Trump"';
 
     const politicsQuery =
       region === "KR"
         ? "대통령 OR 탄핵 OR 계엄 OR 국회 OR 정치 OR 여야 OR 정권"
         : null;
 
+    const geopoliticsQuery =
+      region === "KR"
+        ? "이란 OR 이스라엘 OR 전쟁 OR 중동 OR 지정학 OR 분쟁 OR 러시아 OR 우크라이나 OR 북한 OR 미중갈등"
+        : "Iran OR Israel OR war OR \"Middle East\" OR geopolitical OR conflict OR NATO OR Russia OR Ukraine";
+
     const companyLimit = period === "Y" ? 7 : 5;
     const macroLimit = period === "Y" ? 4 : 3;
     const politicsLimit = 3;
+    const geopoliticsLimit = 3;
 
     const requests: Promise<Article[]>[] = [
       fetchRSS(
@@ -163,6 +169,16 @@ export default async function handler(req: any, res: any) {
         ceid,
         "macro",
         macroLimit
+      ),
+      fetchRSS(
+        geopoliticsQuery,
+        fromDate,
+        toDate,
+        hl,
+        gl,
+        ceid,
+        "macro",
+        geopoliticsLimit
       ),
     ];
     if (politicsQuery) {
