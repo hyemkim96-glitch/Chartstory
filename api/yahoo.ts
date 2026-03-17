@@ -90,7 +90,17 @@ export default async function handler(req: any, res: any) {
         close: close[i] as number,
         value: (volume[i] as number) ?? 0,
       }))
-      .filter((row) => row.open != null && row.open > 0);
+      .filter(
+        (row) =>
+          row.open != null &&
+          row.open > 0 &&
+          row.high != null &&
+          row.high > 0 &&
+          row.low != null &&
+          row.low > 0 &&
+          row.close != null &&
+          row.close > 0
+      );
 
     return res.status(200).json(rows);
   } catch (err) {
