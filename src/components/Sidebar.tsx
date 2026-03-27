@@ -133,7 +133,7 @@ export default function Sidebar({ className }: SidebarProps) {
               {/* 핵심 요약 */}
               <div>
                 <SectionLabel className="mb-3">핵심 요약</SectionLabel>
-                <h3 className="text-[17px] font-bold text-primary leading-snug">
+                <h3 className="text-[15px] font-bold text-primary leading-relaxed">
                   {summary.headline}
                 </h3>
               </div>
