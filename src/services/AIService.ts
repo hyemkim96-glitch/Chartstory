@@ -14,7 +14,7 @@ export class AIService {
   }
   private static readonly API_URL =
     "https://api.groq.com/openai/v1/chat/completions";
-  private static readonly MODEL = "llama-3.3-70b-versatile";
+  private static readonly MODEL = "deepseek-r1-distill-llama-70b";
 
   static async summarizeNews(
     symbol: string,
