@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 import { useAppStore } from "@/store/useAppStore";
 import { StockService } from "@/services/StockService";
 import type { StockMetadata } from "@/types";
@@ -80,7 +81,11 @@ export default function Header() {
       <div className="flex-1 max-w-md mx-8 relative" ref={searchRef}>
         <div className="relative">
           {isSearching ? (
-            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary animate-spin" />
+            <Spinner
+              size="md"
+              color="muted"
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+            />
           ) : (
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-placeholder" />
           )}

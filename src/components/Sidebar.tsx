@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { ExternalLink, Loader2, AlertCircle, Search } from "lucide-react";
+import { ExternalLink, AlertCircle, Search } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 import { useAppStore } from "@/store/useAppStore";
 
 interface SidebarProps {
@@ -62,10 +63,7 @@ export default function Sidebar({ className }: SidebarProps) {
           AI 분석
         </h2>
         {isLoading && (
-          <span className="text-xs font-medium text-brand flex items-center gap-1.5">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            분석 중
-          </span>
+          <Loading variant="inline" size="sm" label="분석 중" />
         )}
       </div>
 
@@ -73,12 +71,7 @@ export default function Sidebar({ className }: SidebarProps) {
       <div className="flex-1 overflow-y-auto">
         {/* Loading */}
         {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3 px-5">
-            <Loader2 className="w-5 h-5 animate-spin text-brand" />
-            <p className="text-xs text-secondary text-center leading-relaxed">
-              뉴스 수집 및 AI 분석 중입니다
-            </p>
-          </div>
+          <Loading variant="section" label="뉴스 수집 및 AI 분석 중입니다" />
         )}
 
         {/* Error */}
