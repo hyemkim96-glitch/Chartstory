@@ -171,17 +171,23 @@ export class StockService {
       ? `/api/yahoo?${new URLSearchParams({ action: "quote", symbol }).toString()}`
       : `/api/kis?${new URLSearchParams({ action: "quote", symbol, exchange: stock?.exchange ?? "KRX" }).toString()}`;
 
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error(`Quote API ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      console.warn(`${isUS ? "Yahoo" : "KIS"} Quote 실패:`, err);
-      return null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`Quote API ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        if (attempt === 2) {
+          console.warn(`${isUS ? "Yahoo" : "KIS"} Quote 실패:`, err);
+          return null;
+        }
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
     }
+    return null;
   }
 
   // ── 주요 세계 사건 데이터베이스 ───────────────────────────────────────────
