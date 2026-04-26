@@ -10,11 +10,11 @@ export interface CandleInfo {
 
 export class AIService {
   private static get apiKey() {
-    return import.meta.env.VITE_GROQ_API_KEY;
+    return import.meta.env.VITE_DEEPSEEK_API_KEY;
   }
   private static readonly API_URL =
-    "https://api.groq.com/openai/v1/chat/completions";
-  private static readonly MODEL = "llama-3.3-70b-versatile";
+    "https://api.deepseek.com/chat/completions";
+  private static readonly MODEL = "deepseek-chat";
 
   static async summarizeNews(
     symbol: string,
@@ -56,12 +56,12 @@ export class AIService {
 
     if (!this.apiKey) {
       console.warn(
-        "[AIService] VITE_GROQ_API_KEY가 없습니다. .env.local 혹은 Vercel 환경변수를 확인해주세요."
+        "[AIService] VITE_DEEPSEEK_API_KEY가 없습니다. .env.local 혹은 Vercel 환경변수를 확인해주세요."
       );
       return {
         headline: "AI 요약 기능 비활성화",
         content:
-          "VITE_GROQ_API_KEY 설정이 필요합니다. 환경변수 추가 후 로컬은 npm run dev를 재시작, Vercel은 다시 배포(Redeploy)해야 반영됩니다.",
+          "VITE_DEEPSEEK_API_KEY 설정이 필요합니다. 환경변수 추가 후 로컬은 npm run dev를 재시작, Vercel은 다시 배포(Redeploy)해야 반영됩니다.",
         sentiment: "neutral",
         date: date,
         sourceLinks: news.map((n) => ({ title: n.title, url: n.url })),
@@ -146,7 +146,7 @@ keyFactors는 실제로 해당하는 항목만 2~4개 포함하세요. 각 항�
       });
 
       if (!response.ok) {
-        throw new Error(`Groq API 오류: ${response.status}`);
+        throw new Error(`DeepSeek API 오류: ${response.status}`);
       }
 
       const data = await response.json();
