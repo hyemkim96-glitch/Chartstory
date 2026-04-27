@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Chart from "./components/Chart";
 import LandingPage from "./components/LandingPage";
@@ -57,15 +57,14 @@ function fmtPer(per: number | undefined): string {
 
 // ── App ──────────────────────────────────────────────────────────────────────
 function App() {
-  const [showLanding, setShowLanding] = useState(true);
-  const { setStock } = useAppStore();
+  const { isLanding, setLanding, setStock } = useAppStore();
 
-  if (showLanding) {
+  if (isLanding) {
     return (
       <LandingPage
         onStart={(stock) => {
           setStock(stock);
-          setShowLanding(false);
+          setLanding(false);
         }}
       />
     );

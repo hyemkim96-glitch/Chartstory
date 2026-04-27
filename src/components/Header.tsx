@@ -9,7 +9,7 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StockMetadata[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { setStock, setSelection, setSummary } = useAppStore();
+  const { setStock, setSelection, setSummary, setLanding } = useAppStore();
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,6 +58,7 @@ export default function Header() {
         onClick={() => {
           setSelection(null);
           setSummary(null);
+          setLanding(true);
         }}
         className="flex items-center gap-2.5 shrink-0 hover:opacity-80 transition-opacity cursor-pointer border-none bg-transparent p-0 focus:outline-none"
       >

@@ -25,6 +25,7 @@ interface AppState {
   error: string | null;
   quote: QuoteData | null;
   quoteLoading: boolean;
+  isLanding: boolean;
 
   setStock: (stock: StockMetadata) => void;
   setTimeRange: (range: TimeRange) => void;
@@ -36,6 +37,7 @@ interface AppState {
   setError: (error: string | null) => void;
   setQuote: (quote: QuoteData | null) => void;
   setQuoteLoading: (loading: boolean) => void;
+  setLanding: (v: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -55,6 +57,7 @@ export const useAppStore = create<AppState>((set) => ({
   error: null,
   quote: null,
   quoteLoading: false,
+  isLanding: true,
 
   setStock: (stock) => set({ currentStock: stock }),
   setTimeRange: (timeRange) => set({ timeRange }),
@@ -66,4 +69,5 @@ export const useAppStore = create<AppState>((set) => ({
   setError: (error) => set({ error }),
   setQuote: (quote) => set({ quote }),
   setQuoteLoading: (loading) => set({ quoteLoading: loading }),
+  setLanding: (v) => set({ isLanding: v }),
 }));
