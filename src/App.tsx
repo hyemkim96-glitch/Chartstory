@@ -57,7 +57,9 @@ function fmtPer(per: number | undefined): string {
 
 // ── App ──────────────────────────────────────────────────────────────────────
 function App() {
-  const { isLanding, setLanding, setStock } = useAppStore();
+  const isLanding = useAppStore((s) => s.isLanding);
+  const setLanding = useAppStore((s) => s.setLanding);
+  const setStock = useAppStore((s) => s.setStock);
 
   if (isLanding) {
     return (

@@ -9,7 +9,10 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StockMetadata[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const { setStock, setSelection, setSummary, setLanding } = useAppStore();
+  const setStock = useAppStore((s) => s.setStock);
+  const setSelection = useAppStore((s) => s.setSelection);
+  const setSummary = useAppStore((s) => s.setSummary);
+  const setLanding = useAppStore((s) => s.setLanding);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
